@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRUD Testing Interface</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', 'Segoe UI', Arial, sans-serif; }
+        .card-minimal { box-shadow: 0 2px 8px 0 rgba(0,0,0,0.04); border-radius: 1rem; border: none; }
+        .input-minimal { background: #f9fafb; border: none; border-radius: 0.5rem; padding: 0.75rem 1rem; transition: box-shadow 0.2s; }
+        .input-minimal:focus { outline: none; box-shadow: 0 0 0 2px #6366f1; background: #fff; }
+        .btn-minimal { background: #6366f1; color: #fff; border: none; border-radius: 0.5rem; padding: 0.5rem 1.5rem; font-weight: 500; transition: background 0.2s, box-shadow 0.2s; }
+        .btn-minimal:hover, .btn-minimal:focus { background: #4f46e5; box-shadow: 0 2px 8px 0 rgba(99,102,241,0.08); }
+        .btn-danger { background: #ef4444; }
+        .btn-danger:hover, .btn-danger:focus { background: #dc2626; }
+        .section-title { font-size: 1.5rem; font-weight: 600; margin-bottom: 1.5rem; color: #22223b; }
+        .label-minimal { color: #6b7280; font-size: 0.95rem; margin-bottom: 0.25rem; }
+        .response-collapsible { transition: max-height 0.3s; overflow: hidden; }
+        .nav-sticky { position: sticky; top: 0; z-index: 50; background: #fff; box-shadow: 0 1px 4px 0 rgba(0,0,0,0.03); }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Sticky Top Nav -->
+    <nav class="nav-sticky w-full flex items-center justify-between px-8 py-4 mb-8">
+        <span class="text-2xl font-bold tracking-tight text-indigo-700">CRUD</span>
+        <button id="logoutBtn" class="btn-minimal btn-danger">Logout</button>
+    </nav>
+    <main class="max-w-3xl mx-auto px-4">
+        <!-- Auth Status -->
+        <div id="authStatus" class="hidden bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 p-4 mb-8 rounded-lg">
+            <p class="font-bold">Authentication Required</p>
+            <p>Please wait while we authenticate you...</p>
+        </div>
+
+        <!-- CRUD Operations Section -->
+        <div id="crudSection" class="hidden space-y-12">
+            <!-- Categories Section -->
+            <section class="card-minimal bg-white p-8 mb-4">
+                <h2 class="section-title">Categories</h2>
+                <!-- Create Category -->
+                <form id="createCategoryForm" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div>
+                        <label class="label-minimal" for="categoryName">Name</label>
+                        <input type="text" id="categoryName" name="name" class="input-minimal w-full" required placeholder="Category name">
+                    </div>
+                    <div>
+                        <label class="label-minimal" for="categoryDescription">Description</label>
+                        <textarea id="categoryDescription" name="description" class="input-minimal w-full" rows="1" placeholder="Description"></textarea>
+                    </div>
+                    <div class="md:col-span-2 flex justify-end">
+                        <button type="submit" class="btn-minimal">Create Category</button>
+                    </div>
+                </form>
+                <!-- List Categories -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-semibold text-lg">Categories List</h3>
+                        <button id="refreshCategories" class="btn-minimal bg-gray-200 text-gray-700 hover:bg-gray-300">Refresh</button>
+                    </div>
+                    <div id="categoriesList" class="space-y-2"></div>
+                </div>
+            </section>
+
+            <!-- Products Section -->
+            <section class="card-minimal bg-white p-8 mb-4">
+                <h2 class="section-title">Products</h2>
+                <!-- Create Product -->
+                <form id="createProductForm" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div>
+                        <label class="label-minimal" for="productName">Name</label>
+                        <input type="text" id="productName" name="name" class="input-minimal w-full" required placeholder="Product name">
+                    </div>
+                    <div>
+                        <label class="label-minimal" for="productDescription">Description</label>
+                        <textarea id="productDescription" name="description" class="input-minimal w-full" rows="1" placeholder="Description"></textarea>
+                    </div>
+                    <div>
+                        <label class="label-minimal" for="productPrice">Price</label>
+                        <input type="number" id="productPrice" name="price" step="0.01" class="input-minimal w-full" required placeholder="Price">
+                    </div>
+                    <div>
+                        <label class="label-minimal" for="productCategory">Category</label>
+                        <select id="productCategory" name="category" class="input-minimal w-full" required title="Select a category">
+                            <option value="">Select a category</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="label-minimal" for="productStock">Stock</label>
+                        <input type="number" id="productStock" name="stock" class="input-minimal w-full" required placeholder="Stock">
+                    </div>
+                    <div class="md:col-span-2 flex justify-end">
+                        <button type="submit" class="btn-minimal">Create Product</button>
+                    </div>
+                </form>
+                <!-- List Products -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-semibold text-lg">Products List</h3>
+                        <button id="refreshProducts" class="btn-minimal bg-gray-200 text-gray-700 hover:bg-gray-300">Refresh</button>
+                    </div>
+                    <div id="productsList" class="space-y-2"></div>
+                </div>
+            </section>
+
+            <!-- Orders Section -->
+            <section class="card-minimal bg-white p-8 mb-4">
+                <h2 class="section-title">Orders</h2>
+                <!-- Create Order -->
+                <form id="createOrderForm" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div>
+                        <label class="label-minimal" for="orderProduct">Product</label>
+                        <select id="orderProduct" name="product" class="input-minimal w-full" required title="Select a product">
+                            <option value="">Select a product</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="label-minimal" for="orderQuantity">Quantity</label>
+                        <input type="number" id="orderQuantity" name="quantity" min="1" class="input-minimal w-full" required placeholder="Quantity">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="label-minimal" for="shippingAddress">Shipping Address</label>
+                        <textarea id="shippingAddress" name="shipping_address" class="input-minimal w-full" rows="1" required placeholder="Shipping address"></textarea>
+                    </div>
+                    <div class="md:col-span-2 flex justify-end">
+                        <button type="submit" class="btn-minimal">Create Order</button>
+                    </div>
+                </form>
+                <!-- List Orders -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-semibold text-lg">Orders List</h3>
+                        <button id="refreshOrders" class="btn-minimal bg-gray-200 text-gray-700 hover:bg-gray-300">Refresh</button>
+                    </div>
+                    <div id="ordersList" class="space-y-2"></div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Response Section (collapsible) -->
+        <section class="card-minimal bg-white p-6 mt-8 mb-8">
+            <div class="flex items-center justify-between mb-2">
+                <h2 class="section-title text-lg mb-0">API Response</h2>
+                <button id="toggleResponse" class="btn-minimal bg-gray-200 text-gray-700 hover:bg-gray-300 px-3 py-1 text-sm">Show/Hide</button>
+            </div>
+            <div id="responseContainer" class="response-collapsible max-h-96">
+                <pre id="response" class="bg-gray-50 p-4 rounded-md overflow-x-auto text-sm"></pre>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const API_URL = '/api';
+        let accessToken = localStorage.getItem('accessToken');
+        let refreshToken = localStorage.getItem('refreshToken');
+        const authStatus = document.getElementById('authStatus');
+        const crudSection = document.getElementById('crudSection');
+
+        // --- CATEGORY UPDATE STATE ---
+        let editingCategoryId = null;
+        const createCategoryBtn = document.querySelector('#createCategoryForm button[type="submit"]');
+        const categoryNameInput = document.getElementById('categoryName');
+        const categoryDescriptionInput = document.getElementById('categoryDescription');
+
+        // --- PRODUCT UPDATE STATE ---
+        let editingProductId = null;
+        const createProductBtn = document.querySelector('#createProductForm button[type="submit"]');
+        const productNameInput = document.getElementById('productName');
+        const productDescriptionInput = document.getElementById('productDescription');
+        const productPriceInput = document.getElementById('productPrice');
+        const productCategoryInput = document.getElementById('productCategory');
+        const productStockInput = document.getElementById('productStock');
+
+        // --- ORDER UPDATE STATE ---
+        let editingOrderId = null;
+        const createOrderBtn = document.querySelector('#createOrderForm button[type="submit"]');
+        const orderProductInput = document.getElementById('orderProduct');
+        const orderQuantityInput = document.getElementById('orderQuantity');
+        const shippingAddressInput = document.getElementById('shippingAddress');
+
+        // Authentication check and token refresh
+        async function checkAuthentication() {
+            if (!accessToken || !refreshToken) {
+                window.location.href = '/';
+                return;
+            }
+
+            authStatus.classList.remove('hidden');
+            try {
+                // Try to make a test API call
+                await apiCall('/categories/');
+                authStatus.classList.add('hidden');
+                crudSection.classList.remove('hidden');
+            } catch (error) {
+                if (error.message.includes('401')) {
+                    try {
+                        // Try to refresh the token
+                        const response = await fetch('/api/auth/token/refresh/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ refresh: refreshToken })
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('Token refresh failed');
+                        }
+
+                        const data = await response.json();
+                        accessToken = data.access;
+                        localStorage.setItem('accessToken', accessToken);
+                        
+                        authStatus.classList.add('hidden');
+                        crudSection.classList.remove('hidden');
+                        
+                        // Reload the data
+                        await Promise.all([
+                            refreshCategories(),
+                            refreshProducts(),
+                            refreshOrders()
+                        ]);
+                    } catch (refreshError) {
+                        // If refresh fails, redirect to login
+                        window.location.href = '/';
+                    }
+                } else {
+                    displayResponse({ error: error.message });
+                }
+            }
+        }
+
+        // Logout functionality
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            window.location.href = '/';
+        });
+
+        // Helper function to display response
+        function displayResponse(data) {
+            document.getElementById('response').textContent = JSON.stringify(data, null, 2);
+        }
+
+        // Helper function for API calls with automatic token refresh
+        async function apiCall(endpoint, method = 'GET', body = null) {
+            const headers = {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
+            };
+
+            const options = {
+                method,
+                headers,
+                ...(body && { body: JSON.stringify(body) })
+            };
+
+            try {
+                const response = await fetch(`${API_URL}${endpoint}`, options);
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        // Try to refresh the token
+                        const refreshResponse = await fetch('/api/auth/token/refresh/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ refresh: refreshToken })
+                        });
+
+                        if (!refreshResponse.ok) {
+                            window.location.href = '/';
+                            throw new Error('Authentication failed');
+                        }
+
+                        const refreshData = await refreshResponse.json();
+                        accessToken = refreshData.access;
+                        localStorage.setItem('accessToken', accessToken);
+
+                        // Retry the original request with the new token
+                        headers.Authorization = `Bearer ${accessToken}`;
+                        const retryResponse = await fetch(`${API_URL}${endpoint}`, options);
+                        if (!retryResponse.ok) {
+                            throw new Error(`HTTP error! status: ${retryResponse.status}`);
+                        }
+                        return await retryResponse.json();
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        // Categories CRUD
+        async function refreshCategories() {
+            try {
+                const categories = await apiCall('/categories/');
+                const list = document.getElementById('categoriesList');
+                const select = document.getElementById('productCategory');
+                
+                list.innerHTML = '';
+                select.innerHTML = '<option value="">Select a category</option>';
+                
+                categories.forEach(category => {
+                    // List item
+                    const div = document.createElement('div');
+                    div.className = 'p-3 bg-gray-50 rounded-md flex justify-between items-center';
+                    div.innerHTML = `
+                        <div>
+                            <strong>${category.name}</strong>
+                            <p class="text-sm text-gray-600">${category.description || 'No description'}</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="editCategory(${category.id}, '${encodeURIComponent(category.name)}', '${encodeURIComponent(category.description || '')}')" class="text-blue-600 hover:text-blue-800">Edit</button>
+                            <button onclick="deleteCategory(${category.id})" class="text-red-600 hover:text-red-800">Delete</button>
+                        </div>
+                    `;
+                    list.appendChild(div);
+
+                    // Select option
+                    const option = document.createElement('option');
+                    option.value = category.id;
+                    option.textContent = category.name;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                displayResponse({ error: error.message });
+            }
+        }
+
+        window.editCategory = function(id, name, description) {
+            editingCategoryId = id;
+            categoryNameInput.value = decodeURIComponent(name);
+            categoryDescriptionInput.value = decodeURIComponent(description);
+            createCategoryBtn.textContent = 'Save Changes';
+            createCategoryBtn.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
+            createCategoryBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+        };
+
+        document.getElementById('createCategoryForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            try {
+                let data;
+                if (editingCategoryId) {
+                    // Update
+                    data = await apiCall(`/categories/${editingCategoryId}/`, 'PUT', Object.fromEntries(formData));
+                    displayResponse(data);
+                    editingCategoryId = null;
+                    createCategoryBtn.textContent = 'Create Category';
+                    createCategoryBtn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
+                    createCategoryBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                } else {
+                    // Create
+                    data = await apiCall('/categories/', 'POST', Object.fromEntries(formData));
+                    displayResponse(data);
+                }
+                await refreshCategories();
+                e.target.reset();
+            } catch (error) {
+                displayResponse({ error: error.message });
+            }
+        });
+
+        async function deleteCategory(id) {
+            try {
+                await apiCall(`/categories/${id}/`, 'DELETE');
+                await refreshCategories();
+                displayResponse({ message: 'Category deleted successfully' });
+            } catch (error) {
+                displayResponse({ error: error.message });
+            }
+        }
+
+        // Products CRUD
+        async function refreshProducts() {
+            try {
+                const products = await apiCall('/products/');
+                const list = document.getElementById('productsList');
+                const select = document.getElementById('orderProduct');
+                
+                list.innerHTML = '';
+                select.innerHTML = '<option value="">Select a product</option>';
+                
+                products.forEach(product => {
+                    // List item
+                    const div = document.createElement('div');
+                    div.className = 'p-3 bg-gray-50 rounded-md flex justify-between items-center';
+                    div.innerHTML = `
+                        <div>
+                            <strong>${product.name}</strong>
+                            <p class="text-sm text-gray-600">${product.description || 'No description'}</p>
+                            <p class="text-sm">Price: $${product.price} | Stock: ${product.stock} | Category: ${product.category_name}</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="editProduct(${product.id}, '${encodeURIComponent(product.name)}', '${encodeURIComponent(product.description)}', '${product.price}', '${product.category}', '${product.stock}')" class="text-blue-600 hover:text-blue-800">Edit</button>
+                            <button onclick="deleteProduct(${product.id})" class="text-red-600 hover:text-red-800">Delete</button>
+                        </div>
+                    `;
+                    list.appendChild(div);
+
+                    // Select option
+                    const option = document.createElement('option');
+                    option.value = product.id;
+                    option.textContent = `${product.name} ($${product.price})`;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                displayResponse({ error: error.message });
+            }
+        }
+
+        window.editProduct = function(id, name, description, price, category, stock) {
+            editingProductId = id;
+            productNameInput.value = decodeURIComponent(name);
+            productDescriptionInput.value = decodeURIComponent(description);
+            productPriceInput.value = price;
+            productCategoryInput.value = category;
+            productStockInput.value = stock;
+            createProductBtn.textContent = 'Save Changes';
+            createProductBtn.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
+            createProductBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+        };
+
+        document.getElementById('createProductForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            try {
+                let data;
+                if (editingProductId) {
+                    // Update
+                    data = await apiCall(`/products/${editingProductId}/`, 'PUT', Object.fromEntries(formData));
+                    displayResponse(data);
+                    editingProductId = null;
+                    createProductBtn.textContent = 'Create Product';
+                    createProductBtn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
+                    createProductBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                } else {
+                    // Create
+                    data = await apiCall('/products/', 'POST', Object.fromEntries(formData));
+                    displayResponse(data);
+                }
+                await refreshProducts();
+                e.target.reset();
+            } catch (error) {
+                displayResponse({ error: error.message });
+            }
+        });
+
+        async function deleteProduct(id) {
+            try {
+                await apiCall(`/products/${id}/`, 'DELETE');
+                await refreshProducts();
+                displayResponse({ message: 'Product deleted successfully' });
+            } catch (error) {
+                displayResponse({ error: error.message });
+            }
+        }
+
+        // Orders CRUD
+        async function refreshOrders() {
+            try {
+                const orders = await apiCall('/orders/');
+                const list = document.getElementById('ordersList');
+                list.innerHTML = '';
+                
+                orders.forEach(order => {
+                    const div = document.createElement('div');
+                    div.className = 'p-3 bg-gray-50 rounded-md';
+                    div.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <strong>Order #${order.id}</strong>
+                                <p class="text-sm">Product: ${order.product_name}</p>
+                                <p class="text-sm">Quantity: ${order.quantity} | Total: $${order.total_price}</p>
+                                <p class="text-sm">Status: ${order.status}</p>
+                                <p class="text-sm text-gray-600">Shipping to: ${order.shipping_address}</p>
+                            </div>
+                            <div class="flex flex-col space-y-2">
+                                <select onchange="updateOrderStatus(${order.id}, this.value)" class="text-sm rounded-md border-gray-300">
+                                    ${['pending', 'processing', 'shipped', 'delivered', 'cancelled']
+                                        .map(status => `<option value="${status}" ${order.status === status ? 'selected' : ''}>${status}</option>`)
+                                        .join('')}
+                                </select>
+                                <button onclick="editOrder(${order.id}, '${order.product}', '${order.quantity}', '${encodeURIComponent(order.shipping_address)}')" class="text-blue-600 hover:text-blue-800 text-sm">Edit</button>
+                                <button onclick="deleteOrder(${order.id})" class="text-red-600 hover:text-red-800 text-sm">Delete</button>
+                            </div>
+                        </div>
+                    `;
+                    list.appendChild(div);
+                });
+            } catch (error) {
+                displayResponse({ error: error.message });
+            }
+        }
+
+        window.editOrder = function(id, product, quantity, shipping_address) {
+            editingOrderId = id;
+            orderProductInput.value = product;
+            orderQuantityInput.value = quantity;
+            shippingAddressInput.value = decodeURIComponent(shipping_address);
+            createOrderBtn.textContent = 'Save Changes';
+            createOrderBtn.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
+            createOrderBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+        };
+
+        document.getElementById('createOrderForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            try {
+                let data;
+                if (editingOrderId) {
+                    // Update
+                    data = await apiCall(`/orders/${editingOrderId}/`, 'PUT', Object.fromEntries(formData));
+                    displayResponse(data);
+                    editingOrderId = null;
+                    createOrderBtn.textContent = 'Create Order';
+                    createOrderBtn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
+                    createOrderBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                } else {
+                    // Create
+                    data = await apiCall('/orders/', 'POST', Object.fromEntries(formData));
+                    displayResponse(data);
+                }
+                await refreshOrders();
+                e.target.reset();
+            } catch (error) {
+                displayResponse({ error: error.message });
+            }
+        });
+
+        async function updateOrderStatus(id, status) {
+            try {
+                const data = await apiCall(`/orders/${id}/update_status/`, 'PATCH', { status });
+                displayResponse(data);
+                await refreshOrders();
+            } catch (error) {
+                displayResponse({ error: error.message });
+            }
+        }
+
+        async function deleteOrder(id) {
+            try {
+                await apiCall(`/orders/${id}/`, 'DELETE');
+                await refreshOrders();
+                displayResponse({ message: 'Order deleted successfully' });
+            } catch (error) {
+                displayResponse({ error: error.message });
+            }
+        }
+
+        // Refresh buttons
+        document.getElementById('refreshCategories').addEventListener('click', () => refreshCategories());
+        document.getElementById('refreshProducts').addEventListener('click', () => refreshProducts());
+        document.getElementById('refreshOrders').addEventListener('click', () => refreshOrders());
+
+        // Initial authentication check and data load
+        checkAuthentication();
+
+        // Collapsible response area
+        const toggleBtn = document.getElementById('toggleResponse');
+        const responseContainer = document.getElementById('responseContainer');
+        let responseVisible = true;
+        toggleBtn.addEventListener('click', () => {
+            responseVisible = !responseVisible;
+            responseContainer.style.maxHeight = responseVisible ? '24rem' : '0';
+            responseContainer.style.overflow = responseVisible ? 'auto' : 'hidden';
+        });
+    </script>
+</body>
+</html> 

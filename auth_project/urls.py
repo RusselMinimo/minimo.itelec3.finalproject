@@ -17,9 +17,12 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import TemplateView
+from frontend.views import CrudTestView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/', include('authentication.urls')),
+    path('api/', include('api.urls')),
     path('', TemplateView.as_view(template_name='frontend/index.html'), name='home'),
+    path('crud/', CrudTestView.as_view(), name='crud_test'),
 ]
