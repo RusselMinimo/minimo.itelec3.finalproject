@@ -9,6 +9,32 @@ The project consists of two main interfaces:
 1. **Authentication Interface** - The main page at `/` for user registration and login.
 2. **CRUD Testing Interface** - A separate interface at `/crud/` for testing CRUD operations.
 
+## Rate Limiting
+
+The API implements rate limiting to prevent abuse and ensure fair usage of resources. Different endpoints have different rate limits based on their nature:
+
+- Category endpoints:
+  - List: 10 requests per minute
+  - Create: 5 requests per minute
+
+- Product endpoints:
+  - List: 20 requests per minute
+  - Create: 5 requests per minute
+  - Category Products: 15 requests per minute
+
+- Order endpoints:
+  - List: 10 requests per minute
+  - Create: 3 requests per minute
+  - Update Status: 5 requests per minute
+
+When a rate limit is exceeded, the API will return a `429 Too Many Requests` status code with the following response:
+
+```json
+{
+    "error": "Rate limit exceeded. Please try again later."
+}
+```
+
 ## Getting Started
 
 ### Installation
@@ -290,6 +316,13 @@ All endpoints may return the following error responses:
     "field_name": [
         "Error message"
     ]
+}
+```
+
+### 429 Too Many Requests
+```json
+{
+    "error": "Rate limit exceeded. Please try again later."
 }
 ```
 

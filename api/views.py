@@ -10,6 +10,7 @@ from .serializers import (
     OrderSerializer, 
     OrderCreateSerializer
 )
+from .utils import ratelimit
 
 # Create your views here.
 
@@ -21,6 +22,14 @@ class CategoryViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'description']
     ordering_fields = ['name', 'created_at']
+    
+    @ratelimit(num_requests=10, timeframe=60)
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+    
+    @ratelimit(num_requests=5, timeframe=60)
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
 
 # Product ViewSet
 class ProductViewSet(viewsets.ModelViewSet):
@@ -31,6 +40,15 @@ class ProductViewSet(viewsets.ModelViewSet):
     search_fields = ['name', 'description', 'category__name']
     ordering_fields = ['name', 'price', 'created_at']
     
+    @ratelimit(num_requests=20, timeframe=60)
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+    
+    @ratelimit(num_requests=5, timeframe=60)
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+    
+    @ratelimit(num_requests=15, timeframe=60)
     @action(detail=True, methods=['get'])
     def category_products(self, request, pk=None):
         category = get_object_or_404(Category, pk=pk)
@@ -59,10 +77,19 @@ class OrderViewSet(viewsets.ModelViewSet):
             return OrderCreateSerializer
         return OrderSerializer
     
+    @ratelimit(num_requests=10, timeframe=60)
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+    
+    @ratelimit(num_requests=3, timeframe=60)
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+        
     def perform_create(self, serializer):
         serializer.save()
         
     # Custom action to update order status
+    @ratelimit(num_requests=5, timeframe=60)
     @action(detail=True, methods=['patch'])
     def update_status(self, request, pk=None):
         order = self.get_object()
