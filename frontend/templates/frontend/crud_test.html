@@ -89,6 +89,11 @@
                         <label class="label-minimal" for="productStock">Stock</label>
                         <input type="number" id="productStock" name="stock" class="input-minimal w-full" required placeholder="Stock">
                     </div>
+                    <div>
+                        <label class="label-minimal" for="productImage">Image</label>
+                        <input type="file" id="productImage" name="image" class="input-minimal w-full" accept="image/jpeg, image/png, image/webp">
+                        <p class="text-xs text-gray-500 mt-1">Max 2MB. JPEG, PNG or WebP only.</p>
+                    </div>
                     <div class="md:col-span-2 flex justify-end">
                         <button type="submit" class="btn-minimal">Create Product</button>
                     </div>
@@ -177,6 +182,9 @@
         const orderProductInput = document.getElementById('orderProduct');
         const orderQuantityInput = document.getElementById('orderQuantity');
         const shippingAddressInput = document.getElementById('shippingAddress');
+
+        // Add a variable to store current order status
+        let currentOrderStatus = 'pending';
 
         // Authentication check and token refresh
         async function checkAuthentication() {
@@ -388,8 +396,16 @@
                     // List item
                     const div = document.createElement('div');
                     div.className = 'p-3 bg-gray-50 rounded-md flex justify-between items-center';
+                    
+                    // Create image HTML if image exists
+                    const imageHtml = product.image_url ? 
+                        `<div class="mr-3 flex-shrink-0">
+                            <img src="${product.image_url}" alt="${product.name}" class="w-16 h-16 object-cover rounded-md">
+                         </div>` : '';
+                    
                     div.innerHTML = `
-                        <div>
+                        ${imageHtml}
+                        <div class="flex-grow">
                             <strong>${product.name}</strong>
                             <p class="text-sm text-gray-600">${product.description || 'No description'}</p>
                             <p class="text-sm">Price: $${product.price} | Stock: ${product.stock} | Category: ${product.category_name}</p>
@@ -430,16 +446,36 @@
             try {
                 let data;
                 if (editingProductId) {
-                    // Update
-                    data = await apiCall(`/products/${editingProductId}/`, 'PUT', Object.fromEntries(formData));
+                    // Update with file upload
+                    const response = await fetch(`${API_URL}/products/${editingProductId}/`, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`
+                        },
+                        body: formData
+                    });
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    data = await response.json();
                     displayResponse(data);
                     editingProductId = null;
                     createProductBtn.textContent = 'Create Product';
                     createProductBtn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
                     createProductBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
                 } else {
-                    // Create
-                    data = await apiCall('/products/', 'POST', Object.fromEntries(formData));
+                    // Create with file upload
+                    const response = await fetch(`${API_URL}/products/`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`
+                        },
+                        body: formData
+                    });
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    data = await response.json();
                     displayResponse(data);
                 }
                 await refreshProducts();
@@ -484,7 +520,7 @@
                                         .map(status => `<option value="${status}" ${order.status === status ? 'selected' : ''}>${status}</option>`)
                                         .join('')}
                                 </select>
-                                <button onclick="editOrder(${order.id}, '${order.product}', '${order.quantity}', '${encodeURIComponent(order.shipping_address)}')" class="text-blue-600 hover:text-blue-800 text-sm">Edit</button>
+                                <button onclick="editOrder(${order.id}, '${order.product}', '${order.quantity}', '${encodeURIComponent(order.shipping_address)}', '${order.status}')" class="text-blue-600 hover:text-blue-800 text-sm">Edit</button>
                                 <button onclick="deleteOrder(${order.id})" class="text-red-600 hover:text-red-800 text-sm">Delete</button>
                             </div>
                         </div>
@@ -496,11 +532,12 @@
             }
         }
 
-        window.editOrder = function(id, product, quantity, shipping_address) {
+        window.editOrder = function(id, product, quantity, shipping_address, status) {
             editingOrderId = id;
             orderProductInput.value = product;
             orderQuantityInput.value = quantity;
             shippingAddressInput.value = decodeURIComponent(shipping_address);
+            currentOrderStatus = status || 'pending';
             createOrderBtn.textContent = 'Save Changes';
             createOrderBtn.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
             createOrderBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
@@ -512,15 +549,56 @@
             try {
                 let data;
                 if (editingOrderId) {
-                    // Update
-                    data = await apiCall(`/orders/${editingOrderId}/`, 'PUT', Object.fromEntries(formData));
+                    // Get product details to calculate price
+                    const productId = formData.get('product');
+                    const quantity = parseInt(formData.get('quantity') || '1');
+                    
+                    // First, get the product details to calculate price
+                    const productResponse = await fetch(`${API_URL}/products/${productId}/`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`
+                        }
+                    });
+                    
+                    if (!productResponse.ok) {
+                        throw new Error(`HTTP error! Status: ${productResponse.status}`);
+                    }
+                    
+                    const productData = await productResponse.json();
+                    const total_price = productData.price * quantity;
+                    
+                    // Now create the order data with the calculated total_price
+                    const orderData = {
+                        product: productId,
+                        quantity: quantity,
+                        shipping_address: formData.get('shipping_address'),
+                        total_price: total_price,
+                        status: currentOrderStatus // Use the current status
+                    };
+                    
+                    // Update the order
+                    const response = await fetch(`${API_URL}/orders/${editingOrderId}/`, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(orderData)
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    
+                    data = await response.json();
                     displayResponse(data);
                     editingOrderId = null;
                     createOrderBtn.textContent = 'Create Order';
                     createOrderBtn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
                     createOrderBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
                 } else {
-                    // Create
+                    // Create using the existing OrderCreateSerializer which handles the calculation
                     data = await apiCall('/orders/', 'POST', Object.fromEntries(formData));
                     displayResponse(data);
                 }

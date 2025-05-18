@@ -68,15 +68,19 @@ python manage.py runserver
 ### Register
 - **Method**: POST
 - **URL**: `/api/auth/register/`
+- **Content-Type**: `multipart/form-data`
 - **Body**:
-```json
-{
-    "username": "string",
-    "email": "string",
-    "password": "string",
-    "password2": "string"
-}
 ```
+username: string
+email: string
+password: string
+password2: string
+photo: file (optional, image file)
+```
+- **File Upload Requirements**:
+  - Only JPEG, PNG, and WebP files are supported
+  - Maximum file size: 2MB
+  - Images will be automatically cropped to 1:1 aspect ratio
 - **Response**:
 ```json
 {
@@ -116,6 +120,20 @@ python manage.py runserver
 ```json
 {
     "access": "string"
+}
+```
+
+### User Profile
+- **Method**: GET
+- **URL**: `/api/auth/profile/`
+- **Headers**: `Authorization: Bearer <access_token>`
+- **Response**:
+```json
+{
+    "id": 1,
+    "username": "string",
+    "email": "string",
+    "photo_url": "string or null"
 }
 ```
 
@@ -188,6 +206,8 @@ All product endpoints require authentication.
         "category": 1,
         "category_name": "string",
         "stock": "integer",
+        "image": "string or null",
+        "image_url": "string or null",
         "created_at": "datetime",
         "updated_at": "datetime"
     }
@@ -197,16 +217,19 @@ All product endpoints require authentication.
 ### Create Product
 - **Method**: POST
 - **URL**: `/api/products/`
+- **Content-Type**: `multipart/form-data`
 - **Body**:
-```json
-{
-    "name": "string",
-    "description": "string",
-    "price": "decimal",
-    "category": "integer",
-    "stock": "integer"
-}
 ```
+name: string
+description: string
+price: decimal
+category: integer
+stock: integer
+image: file (optional, image file)
+```
+- **File Upload Requirements**:
+  - Only JPEG, PNG, and WebP files are supported
+  - Maximum file size: 2MB
 
 ### Get Product
 - **Method**: GET
@@ -215,6 +238,7 @@ All product endpoints require authentication.
 ### Update Product
 - **Method**: PUT/PATCH
 - **URL**: `/api/products/{id}/`
+- **Content-Type**: `multipart/form-data`
 - **Body**: Same as Create Product
 
 ### Delete Product
@@ -281,9 +305,32 @@ All order endpoints require authentication. Regular users can only access their 
 }
 ```
 
-### Delete Order
-- **Method**: DELETE
-- **URL**: `/api/orders/{id}/`
+## File Upload Guidelines
+
+This API supports file uploads for user profile photos and product images. Here are the guidelines for uploading files:
+
+### Supported File Types
+- JPEG (.jpg, .jpeg)
+- PNG (.png)
+- WebP (.webp)
+
+### File Size Limits
+- Maximum file size: 2MB
+
+### Image Processing
+- User profile photos are automatically cropped to a 1:1 aspect ratio (square)
+- Images are stored in the following directories:
+  - User profile photos: `/media/profile_photos/`
+  - Product images: `/media/product_images/`
+
+### Upload Process
+1. Use `multipart/form-data` as the Content-Type in your request
+2. Include the image file in the request body with the appropriate field name:
+   - For user registration: `photo`
+   - For products: `image`
+3. The server will validate the file type and size
+4. If the validation passes, the file will be stored and processed
+5. If the validation fails, an error response will be returned
 
 ## Error Responses
 

@@ -15,11 +15,20 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     category_name = serializers.ReadOnlyField(source='category.name')
+    image_url = serializers.SerializerMethodField()
     
     class Meta:
         model = Product
-        fields = ['id', 'name', 'description', 'price', 'category', 'category_name', 'stock', 'created_at', 'updated_at']
-        read_only_fields = ['created_at', 'updated_at']
+        fields = ['id', 'name', 'description', 'price', 'category', 'category_name', 'stock', 'image', 'image_url', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at', 'image_url']
+    
+    def get_image_url(self, obj):
+        if obj.image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.image.url)
+            return obj.image.url
+        return None
 
 class OrderSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)

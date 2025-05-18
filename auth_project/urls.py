@@ -18,6 +18,8 @@ from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import TemplateView
 from frontend.views import CrudTestView
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -26,3 +28,7 @@ urlpatterns = [
     path('', TemplateView.as_view(template_name='frontend/index.html'), name='home'),
     path('crud/', CrudTestView.as_view(), name='crud_test'),
 ]
+
+# Serve media files in development
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
