@@ -2,153 +2,769 @@
 
 {% block title %}Student Dashboard - OJT Tracker{% endblock %}
 
+{% block extra_css %}
+<style>
+    :root {
+        /* Modern color palette matching login page */
+        --primary-color: #0f172a;
+        --primary-light: #1e293b;
+        --text-primary: #0f172a;
+        --text-secondary: #64748b;
+        --text-muted: #94a3b8;
+        --background: #f8fafc;
+        --surface: rgba(255, 255, 255, 0.9);
+        --surface-hover: rgba(241, 245, 249, 0.8);
+        --border: #e2e8f0;
+        --border-focus: #cbd5e1;
+        --accent: #3b82f6;
+        --accent-hover: #2563eb;
+        --accent-light: #dbeafe;
+        --error: #ef4444;
+        --error-light: #fef2f2;
+        --success: #10b981;
+        --success-light: #f0fdf4;
+        --warning: #f59e0b;
+        --warning-light: #fef3c7;
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        --gradient-accent: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        --gradient-success: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+        --gradient-warning: linear-gradient(135deg, #ffc837 0%, #ff8008 100%);
+    }
+
+    body {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%);
+        background-attachment: fixed;
+        min-height: 100vh;
+    }
+
+    /* Header styling */
+    .dashboard-header {
+        background: var(--surface);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: var(--shadow-lg);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        animation: slideDown 0.8s ease-out;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .dashboard-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .welcome-title {
+        font-size: 2.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.025em;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .welcome-icon {
+        width: 56px;
+        height: 56px;
+        background: var(--gradient-accent);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: var(--shadow-lg);
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+
+    .welcome-icon i {
+        color: white;
+        width: 28px;
+        height: 28px;
+    }
+
+    .student-badge {
+        background: var(--gradient-primary);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1rem;
+        box-shadow: var(--shadow-md);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Modern stat cards */
+    .modern-stat-card {
+        background: var(--surface);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: var(--shadow-xl);
+        padding: 2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        animation: slideUp 0.8s ease-out both;
+        height: 100%;
+    }
+
+    .modern-stat-card:nth-child(1) { animation-delay: 0.1s; }
+    .modern-stat-card:nth-child(2) { animation-delay: 0.2s; }
+    .modern-stat-card:nth-child(3) { animation-delay: 0.3s; }
+    .modern-stat-card:nth-child(4) { animation-delay: 0.4s; }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .modern-stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    }
+
+    .modern-stat-card:hover {
+        transform: translateY(-8px);
+        box-shadow: var(--shadow-xl);
+    }
+
+    .stat-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        box-shadow: var(--shadow-lg);
+        transition: all 0.3s ease;
+    }
+
+    .stat-icon.hours {
+        background: var(--gradient-accent);
+    }
+
+    .stat-icon.completion {
+        background: var(--gradient-success);
+    }
+
+    .stat-icon.attendance {
+        background: var(--gradient-warning);
+    }
+
+    .stat-icon.messages {
+        background: var(--gradient-secondary);
+    }
+
+    .stat-icon i {
+        color: white;
+        width: 28px;
+        height: 28px;
+    }
+
+    .stat-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: 0.75rem;
+        letter-spacing: 0.025em;
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.025em;
+    }
+
+    .stat-subtitle {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    /* Modern progress bar */
+    .modern-progress {
+        height: 8px;
+        background: rgba(59, 130, 246, 0.1);
+        border-radius: 4px;
+        margin-top: 1rem;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .modern-progress-bar {
+        height: 100%;
+        background: var(--gradient-accent);
+        border-radius: 4px;
+        transition: width 1s ease-out;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .modern-progress-bar::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        animation: shimmer 2s infinite;
+    }
+
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+
+    /* Modern content cards */
+    .modern-card {
+        background: var(--surface);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: var(--shadow-lg);
+        transition: all 0.3s ease;
+        animation: slideUp 0.8s ease-out 0.6s both;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .modern-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    }
+
+    .modern-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-xl);
+    }
+
+    .modern-card-header {
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.5);
+        position: relative;
+    }
+
+    .modern-card-header h5 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .modern-card-header i {
+        width: 24px;
+        height: 24px;
+        color: var(--accent);
+    }
+
+    .modern-card-body {
+        padding: 2rem;
+    }
+
+    /* Modern buttons */
+    .modern-btn {
+        background: var(--gradient-accent);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow-md);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .modern-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .modern-btn:hover::before {
+        left: 100%;
+    }
+
+    .modern-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-xl);
+        color: white;
+        text-decoration: none;
+    }
+
+    .modern-btn.outline {
+        background: transparent;
+        color: var(--accent);
+        border: 2px solid var(--accent);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
+
+    .modern-btn.outline:hover {
+        background: var(--accent);
+        color: white;
+    }
+
+    /* Activity list styling */
+    .activity-item {
+        padding: 1.5rem;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.7);
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .activity-item::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: var(--gradient-accent);
+    }
+
+    .activity-item:hover {
+        transform: translateX(4px);
+        box-shadow: var(--shadow-md);
+        background: rgba(255, 255, 255, 0.9);
+    }
+
+    .activity-date {
+        font-weight: 700;
+        color: var(--text-primary);
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .activity-desc {
+        color: var(--text-secondary);
+        margin-bottom: 0.75rem;
+        line-height: 1.6;
+    }
+
+    .activity-hours {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .status-badge.approved {
+        background: var(--success-light);
+        color: var(--success);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .status-badge.pending {
+        background: var(--warning-light);
+        color: var(--warning);
+        border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    /* Evaluation item styling */
+    .evaluation-item {
+        padding: 1rem;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.7);
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .evaluation-item:hover {
+        background: rgba(255, 255, 255, 0.9);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .evaluation-score {
+        background: var(--gradient-primary);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 0.875rem;
+    }
+
+    /* No data states */
+    .no-data {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: var(--text-muted);
+    }
+
+    .no-data i {
+        width: 48px;
+        height: 48px;
+        color: var(--text-muted);
+        margin-bottom: 1rem;
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .welcome-title {
+            font-size: 1.75rem;
+            flex-direction: column;
+            text-align: center;
+            gap: 1rem;
+        }
+
+        .dashboard-header {
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .modern-stat-card {
+            padding: 1.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+        }
+
+        .modern-card-body {
+            padding: 1.5rem;
+        }
+    }
+
+    /* Alert styling */
+    .modern-alert {
+        background: var(--surface);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 16px;
+        border: 1px solid var(--accent-light);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        animation: slideUp 0.8s ease-out;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .modern-alert::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    }
+
+    .modern-alert h4 {
+        color: var(--text-primary);
+        font-weight: 700;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .modern-alert p {
+        color: var(--text-secondary);
+        margin: 0;
+        line-height: 1.6;
+    }
+
+    /* Placement info styling */
+    .placement-info {
+        background: rgba(255, 255, 255, 0.7);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .placement-info p {
+        margin-bottom: 0.75rem;
+        color: var(--text-secondary);
+        line-height: 1.6;
+    }
+
+    .placement-info strong {
+        color: var(--text-primary);
+        font-weight: 600;
+    }
+
+    .status-badge.active {
+        background: var(--success-light);
+        color: var(--success);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+    }
+</style>
+
+<!-- Lucide Icons -->
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+{% endblock %}
+
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">
-        <i class="fas fa-tachometer-alt me-2"></i>
-        Welcome, {{ student.user.get_full_name }}
-    </h1>
-    <span class="badge bg-primary fs-6">{{ student.student_id }}</span>
+<!-- Modern Dashboard Header -->
+<div class="dashboard-header">
+    <div class="d-flex justify-content-between align-items-center flex-wrap">
+        <div class="welcome-title">
+            <div class="welcome-icon">
+                <i data-lucide="graduation-cap"></i>
+            </div>
+            <div>
+                Welcome back, {{ student.user.get_full_name }}
+            </div>
+        </div>
+        <span class="student-badge">
+            <i data-lucide="id-card" style="width: 18px; height: 18px; margin-right: 0.5rem;"></i>
+            {{ student.student_id }}
+        </span>
+    </div>
 </div>
 
 {% if current_placement %}
+<!-- Modern Statistics Cards -->
 <div class="row mb-4">
-    <!-- Progress Overview -->
-    <div class="col-md-6 col-lg-3 mb-3">
-        <div class="card stat-card">
-            <div class="card-body text-center">
-                <i class="fas fa-clock fa-2x mb-2"></i>
-                <h5 class="card-title">Hours Completed</h5>
-                <h3 class="mb-0">{{ total_hours_completed|floatformat:1 }}</h3>
-                <small>of {{ total_hours_required }} required</small>
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="modern-stat-card">
+            <div class="stat-icon hours">
+                <i data-lucide="clock"></i>
+            </div>
+            <div class="stat-title">Hours Completed</div>
+            <div class="stat-value">{{ total_hours_completed|floatformat:1 }}</div>
+            <div class="stat-subtitle">of {{ total_hours_required }} required</div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="modern-stat-card">
+            <div class="stat-icon completion">
+                <i data-lucide="target"></i>
+            </div>
+            <div class="stat-title">Completion</div>
+            <div class="stat-value">{{ completion_percentage|floatformat:1 }}%</div>
+            <div class="modern-progress">
+                <div class="modern-progress-bar" style="width: {{ completion_percentage }}%"></div>
             </div>
         </div>
     </div>
     
-    <div class="col-md-6 col-lg-3 mb-3">
-        <div class="card stat-card">
-            <div class="card-body text-center">
-                <i class="fas fa-percentage fa-2x mb-2"></i>
-                <h5 class="card-title">Completion</h5>
-                <h3 class="mb-0">{{ completion_percentage|floatformat:1 }}%</h3>
-                <div class="progress progress-custom mt-2">
-                    <div class="progress-bar" style="width: {{ completion_percentage }}%"></div>
-                </div>
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="modern-stat-card">
+            <div class="stat-icon attendance">
+                <i data-lucide="calendar-check"></i>
             </div>
+            <div class="stat-title">Attendance</div>
+            <div class="stat-value">{{ attendance_rate|floatformat:1 }}%</div>
+            <div class="stat-subtitle">attendance rate</div>
         </div>
     </div>
     
-    <div class="col-md-6 col-lg-3 mb-3">
-        <div class="card stat-card">
-            <div class="card-body text-center">
-                <i class="fas fa-calendar-check fa-2x mb-2"></i>
-                <h5 class="card-title">Attendance</h5>
-                <h3 class="mb-0">{{ attendance_rate|floatformat:1 }}%</h3>
-                <small>attendance rate</small>
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="modern-stat-card">
+            <div class="stat-icon messages">
+                <i data-lucide="mail"></i>
             </div>
-        </div>
-    </div>
-    
-    <div class="col-md-6 col-lg-3 mb-3">
-        <div class="card stat-card">
-            <div class="card-body text-center">
-                <i class="fas fa-envelope fa-2x mb-2"></i>
-                <h5 class="card-title">Messages</h5>
-                <h3 class="mb-0">{{ unread_messages.count }}</h3>
-                <small>unread messages</small>
-            </div>
+            <div class="stat-title">Messages</div>
+            <div class="stat-value">{{ unread_messages.count }}</div>
+            <div class="stat-subtitle">unread messages</div>
         </div>
     </div>
 </div>
 
-<!-- Current Placement Info -->
+<!-- Current Placement Information -->
 <div class="row mb-4">
     <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-building me-2"></i>
+        <div class="modern-card">
+            <div class="modern-card-header">
+                <h5>
+                    <i data-lucide="building"></i>
                     Current Placement
                 </h5>
             </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <p><strong>Company:</strong> {{ current_placement.company.name }}</p>
-                        <p><strong>Position:</strong> {{ current_placement.position }}</p>
-                        <p><strong>Department:</strong> {{ current_placement.department }}</p>
+            <div class="modern-card-body">
+                <div class="placement-info">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Company:</strong> {{ current_placement.company.name }}</p>
+                            <p><strong>Position:</strong> {{ current_placement.position }}</p>
+                            <p><strong>Department:</strong> {{ current_placement.department }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Start Date:</strong> {{ current_placement.start_date }}</p>
+                            <p><strong>End Date:</strong> {{ current_placement.end_date }}</p>
+                            <p><strong>Supervisor:</strong> {{ current_placement.supervisor.user.get_full_name }}</p>
+                        </div>
                     </div>
-                    <div class="col-md-6">
-                        <p><strong>Start Date:</strong> {{ current_placement.start_date }}</p>
-                        <p><strong>End Date:</strong> {{ current_placement.end_date }}</p>
-                        <p><strong>Supervisor:</strong> {{ current_placement.supervisor.user.get_full_name }}</p>
+                    <div class="mt-3">
+                        <span class="status-badge active">
+                            <i data-lucide="check-circle" style="width: 16px; height: 16px; margin-right: 0.5rem;"></i>
+                            {{ current_placement.get_status_display }}
+                        </span>
                     </div>
                 </div>
-                <span class="badge badge-status bg-success">{{ current_placement.get_status_display }}</span>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Recent Activities -->
+<!-- Content Row -->
 <div class="row">
-    <div class="col-lg-8">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">
-                    <i class="fas fa-clipboard-list me-2"></i>
-                    Recent Activities
-                </h5>
-                <a href="{% url 'ojt_tracker:activity_log' %}" class="btn btn-sm btn-primary">
-                    View All
-                </a>
+    <!-- Recent Activities -->
+    <div class="col-lg-8 mb-4">
+        <div class="modern-card">
+            <div class="modern-card-header">
+                <div class="d-flex justify-content-between align-items-center w-100">
+                    <h5>
+                        <i data-lucide="clipboard-list"></i>
+                        Recent Activities
+                    </h5>
+                    <a href="{% url 'ojt_tracker:activity_log' %}" class="modern-btn">
+                        <i data-lucide="arrow-right" style="width: 16px; height: 16px;"></i>
+                        View All
+                    </a>
+                </div>
             </div>
-            <div class="card-body">
+            <div class="modern-card-body">
                 {% if recent_activities %}
-                    <div class="list-group list-group-flush">
-                        {% for activity in recent_activities %}
-                        <div class="list-group-item">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div>
-                                    <h6 class="mb-1">{{ activity.date }}</h6>
-                                    <p class="mb-1">{{ activity.activities|truncatewords:20 }}</p>
-                                    <small>{{ activity.hours_worked }} hours</small>
+                    {% for activity in recent_activities %}
+                    <div class="activity-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="activity-date">{{ activity.date }}</div>
+                                <div class="activity-desc">{{ activity.activities|truncatewords:20 }}</div>
+                                <div class="activity-hours">
+                                    <i data-lucide="clock" style="width: 14px; height: 14px; margin-right: 0.25rem;"></i>
+                                    {{ activity.hours_worked }} hours
                                 </div>
-                                <span class="badge {% if activity.is_approved %}bg-success{% else %}bg-warning{% endif %}">
-                                    {% if activity.is_approved %}Approved{% else %}Pending{% endif %}
-                                </span>
                             </div>
+                            <span class="status-badge {% if activity.is_approved %}approved{% else %}pending{% endif %}">
+                                {% if activity.is_approved %}
+                                    <i data-lucide="check" style="width: 12px; height: 12px; margin-right: 0.25rem;"></i>
+                                    Approved
+                                {% else %}
+                                    <i data-lucide="clock" style="width: 12px; height: 12px; margin-right: 0.25rem;"></i>
+                                    Pending
+                                {% endif %}
+                            </span>
                         </div>
-                        {% endfor %}
                     </div>
+                    {% endfor %}
                 {% else %}
-                    <p class="text-muted">No activities logged yet.</p>
+                    <div class="no-data">
+                        <i data-lucide="clipboard"></i>
+                        <h5>No activities logged yet</h5>
+                        <p>Start by logging your first OJT activity!</p>
+                    </div>
                 {% endif %}
             </div>
         </div>
     </div>
     
-    <div class="col-lg-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-star me-2"></i>
+    <!-- Recent Evaluations -->
+    <div class="col-lg-4 mb-4">
+        <div class="modern-card">
+            <div class="modern-card-header">
+                <h5>
+                    <i data-lucide="star"></i>
                     Recent Evaluations
                 </h5>
             </div>
-            <div class="card-body">
+            <div class="modern-card-body">
                 {% if recent_evaluations %}
                     {% for evaluation in recent_evaluations %}
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between">
+                    <div class="evaluation-item">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
                             <span class="fw-bold">{{ evaluation.get_evaluation_type_display }}</span>
-                            <span class="badge bg-primary">{{ evaluation.average_score|floatformat:1 }}/5</span>
+                            <span class="evaluation-score">{{ evaluation.average_score|floatformat:1 }}/5</span>
                         </div>
-                        <small class="text-muted">{{ evaluation.evaluation_period_start }}</small>
+                        <small class="text-muted">
+                            <i data-lucide="calendar" style="width: 12px; height: 12px; margin-right: 0.25rem;"></i>
+                            {{ evaluation.evaluation_period_start }}
+                        </small>
                     </div>
                     {% endfor %}
                 {% else %}
-                    <p class="text-muted">No evaluations yet.</p>
+                    <div class="no-data">
+                        <i data-lucide="star"></i>
+                        <h6>No evaluations yet</h6>
+                        <p>Evaluations will appear here once submitted.</p>
+                    </div>
                 {% endif %}
             </div>
         </div>
@@ -156,8 +772,12 @@
 </div>
 
 {% else %}
-<div class="alert alert-info" role="alert">
-    <h4 class="alert-heading">No Active Placement</h4>
+<!-- No Active Placement -->
+<div class="modern-alert">
+    <h4>
+        <i data-lucide="info"></i>
+        No Active Placement
+    </h4>
     <p>You don't have an active OJT placement yet. Please contact your coordinator for placement assignment.</p>
 </div>
 {% endif %}
@@ -165,33 +785,37 @@
 <!-- Quick Actions -->
 <div class="row mt-4">
     <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-rocket me-2"></i>
+        <div class="modern-card">
+            <div class="modern-card-header">
+                <h5>
+                    <i data-lucide="zap"></i>
                     Quick Actions
                 </h5>
             </div>
-            <div class="card-body">
+            <div class="modern-card-body">
                 <div class="row">
-                    <div class="col-md-3 mb-2">
-                        <a href="{% url 'ojt_tracker:activity_log' %}" class="btn btn-outline-primary w-100">
-                            <i class="fas fa-plus me-2"></i>Log Activity
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'ojt_tracker:activity_log' %}" class="modern-btn outline w-100 justify-content-center">
+                            <i data-lucide="plus" style="width: 18px; height: 18px;"></i>
+                            Log Activity
                         </a>
                     </div>
-                    <div class="col-md-3 mb-2">
-                        <a href="{% url 'ojt_tracker:student_attendance' %}" class="btn btn-outline-success w-100">
-                            <i class="fas fa-calendar-check me-2"></i>View Attendance
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'ojt_tracker:student_attendance' %}" class="modern-btn outline w-100 justify-content-center">
+                            <i data-lucide="calendar-check" style="width: 18px; height: 18px;"></i>
+                            View Attendance
                         </a>
                     </div>
-                    <div class="col-md-3 mb-2">
-                        <a href="{% url 'ojt_tracker:messages' %}" class="btn btn-outline-info w-100">
-                            <i class="fas fa-envelope me-2"></i>Send Message
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'ojt_tracker:messages' %}" class="modern-btn outline w-100 justify-content-center">
+                            <i data-lucide="mail" style="width: 18px; height: 18px;"></i>
+                            Send Message
                         </a>
                     </div>
-                    <div class="col-md-3 mb-2">
-                        <a href="{% url 'ojt_tracker:reports' %}" class="btn btn-outline-warning w-100">
-                            <i class="fas fa-chart-bar me-2"></i>View Reports
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'ojt_tracker:reports' %}" class="modern-btn outline w-100 justify-content-center">
+                            <i data-lucide="bar-chart-3" style="width: 18px; height: 18px;"></i>
+                            View Reports
                         </a>
                     </div>
                 </div>
@@ -203,14 +827,17 @@
 
 {% block extra_js %}
 <script>
+// Initialize Lucide icons
+lucide.createIcons();
+
 // Get CSRF token
 function getCSRFToken() {
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
     return csrfToken ? csrfToken.value : '';
 }
 
-// Auto-refresh unread message count
-setInterval(function() {
+// Auto-refresh unread message count with modern animation
+function updateUnreadCount() {
     fetch('/api/messages/unread/', {
         method: 'GET',
         headers: {
@@ -221,14 +848,110 @@ setInterval(function() {
     })
         .then(response => response.json())
         .then(data => {
-            const unreadCount = document.getElementById('unreadCount');
-            if (unreadCount) {
-                unreadCount.textContent = data.length;
+            const unreadElements = document.querySelectorAll('.stat-value');
+            if (unreadElements.length >= 4) {
+                const messageElement = unreadElements[3]; // Messages is the 4th stat card
+                if (messageElement && messageElement.textContent !== data.length.toString()) {
+                    messageElement.style.transform = 'scale(1.1)';
+                    messageElement.style.color = 'var(--accent)';
+                    messageElement.textContent = data.length;
+                    
+                    setTimeout(() => {
+                        messageElement.style.transform = 'scale(1)';
+                        messageElement.style.color = 'var(--text-primary)';
+                    }, 300);
+                }
             }
         })
         .catch(error => {
             console.error('Error fetching unread messages:', error);
         });
-}, 30000); // Refresh every 30 seconds
+}
+
+// Update message count every 30 seconds
+setInterval(updateUnreadCount, 30000);
+
+// Add scroll animations
+const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+};
+
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+        }
+    });
+}, observerOptions);
+
+// Observe elements for scroll animation
+document.addEventListener('DOMContentLoaded', function() {
+    const elementsToAnimate = document.querySelectorAll('.modern-card, .modern-stat-card');
+    elementsToAnimate.forEach(el => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(20px)';
+        el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(el);
+    });
+    
+    // Initialize progress bar animation
+    setTimeout(() => {
+        const progressBars = document.querySelectorAll('.modern-progress-bar');
+        progressBars.forEach(bar => {
+            const width = bar.style.width;
+            bar.style.width = '0%';
+            setTimeout(() => {
+                bar.style.width = width;
+            }, 500);
+        });
+    }, 1000);
+});
+
+// Add ripple effect to buttons
+document.querySelectorAll('.modern-btn').forEach(button => {
+    button.addEventListener('click', function(e) {
+        const ripple = document.createElement('span');
+        const rect = this.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        const x = e.clientX - rect.left - size / 2;
+        const y = e.clientY - rect.top - size / 2;
+        
+        ripple.style.width = ripple.style.height = size + 'px';
+        ripple.style.left = x + 'px';
+        ripple.style.top = y + 'px';
+        ripple.classList.add('ripple');
+        
+        ripple.style.position = 'absolute';
+        ripple.style.borderRadius = '50%';
+        ripple.style.background = 'rgba(255, 255, 255, 0.3)';
+        ripple.style.transform = 'scale(0)';
+        ripple.style.animation = 'ripple 0.6s linear';
+        ripple.style.pointerEvents = 'none';
+        
+        this.appendChild(ripple);
+        
+        setTimeout(() => {
+            ripple.remove();
+        }, 600);
+    });
+});
+
+// Add CSS for ripple animation
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes ripple {
+        to {
+            transform: scale(4);
+            opacity: 0;
+        }
+    }
+    .modern-btn {
+        position: relative;
+        overflow: hidden;
+    }
+`;
+document.head.appendChild(style);
 </script>
 {% endblock %} 

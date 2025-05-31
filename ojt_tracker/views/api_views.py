@@ -259,6 +259,16 @@ class MessageViewSet(viewsets.ModelViewSet):
             Q(sender=self.request.user) | Q(recipient=self.request.user)
         )
 
+    @action(detail=False, methods=['get'])
+    def unread(self, request):
+        """Get unread messages for current user"""
+        unread_messages = self.get_queryset().filter(
+            recipient=request.user,
+            is_read=False
+        )
+        serializer = self.get_serializer(unread_messages, many=True)
+        return Response(serializer.data)
+
 class ReportViewSet(viewsets.ModelViewSet):
     """ViewSet for managing reports"""
     queryset = Report.objects.all()

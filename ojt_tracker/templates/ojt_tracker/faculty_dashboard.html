@@ -2,58 +2,666 @@
 
 {% block title %}Faculty Dashboard - OJT Tracker{% endblock %}
 
+{% block extra_css %}
+<style>
+    :root {
+        /* Modern color palette matching student dashboard */
+        --primary-color: #0f172a;
+        --primary-light: #1e293b;
+        --text-primary: #0f172a;
+        --text-secondary: #64748b;
+        --text-muted: #94a3b8;
+        --background: #f8fafc;
+        --surface: rgba(255, 255, 255, 0.9);
+        --surface-hover: rgba(241, 245, 249, 0.8);
+        --border: #e2e8f0;
+        --border-focus: #cbd5e1;
+        --accent: #3b82f6;
+        --accent-hover: #2563eb;
+        --accent-light: #dbeafe;
+        --error: #ef4444;
+        --error-light: #fef2f2;
+        --success: #10b981;
+        --success-light: #f0fdf4;
+        --warning: #f59e0b;
+        --warning-light: #fef3c7;
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        --gradient-accent: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        --gradient-success: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+        --gradient-warning: linear-gradient(135deg, #ffc837 0%, #ff8008 100%);
+    }
+
+    body {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%);
+        background-attachment: fixed;
+        min-height: 100vh;
+    }
+
+    /* Header styling */
+    .dashboard-header {
+        background: var(--surface);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: var(--shadow-lg);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        animation: slideDown 0.8s ease-out;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .dashboard-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .welcome-title {
+        font-size: 2.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.025em;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .welcome-icon {
+        width: 56px;
+        height: 56px;
+        background: var(--gradient-primary);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: var(--shadow-lg);
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+
+    .welcome-icon i {
+        color: white;
+        width: 28px;
+        height: 28px;
+    }
+
+    .faculty-badge {
+        background: var(--gradient-primary);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1rem;
+        box-shadow: var(--shadow-md);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Modern stat cards */
+    .modern-stat-card {
+        background: var(--surface);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: var(--shadow-xl);
+        padding: 2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        animation: slideUp 0.8s ease-out both;
+        height: 100%;
+    }
+
+    .modern-stat-card:nth-child(1) { animation-delay: 0.1s; }
+    .modern-stat-card:nth-child(2) { animation-delay: 0.2s; }
+    .modern-stat-card:nth-child(3) { animation-delay: 0.3s; }
+    .modern-stat-card:nth-child(4) { animation-delay: 0.4s; }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .modern-stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    }
+
+    .modern-stat-card:hover {
+        transform: translateY(-8px);
+        box-shadow: var(--shadow-xl);
+    }
+
+    .stat-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        box-shadow: var(--shadow-lg);
+        transition: all 0.3s ease;
+    }
+
+    .stat-icon.students {
+        background: var(--gradient-accent);
+    }
+
+    .stat-icon.approvals {
+        background: var(--gradient-warning);
+    }
+
+    .stat-icon.evaluations {
+        background: var(--gradient-success);
+    }
+
+    .stat-icon.messages {
+        background: var(--gradient-secondary);
+    }
+
+    .stat-icon i {
+        color: white;
+        width: 28px;
+        height: 28px;
+    }
+
+    .stat-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: 0.75rem;
+        letter-spacing: 0.025em;
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.025em;
+    }
+
+    .stat-subtitle {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    /* Modern content cards */
+    .modern-card {
+        background: var(--surface);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: var(--shadow-lg);
+        transition: all 0.3s ease;
+        animation: slideUp 0.8s ease-out 0.6s both;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .modern-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    }
+
+    .modern-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-xl);
+    }
+
+    .modern-card-header {
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.5);
+        position: relative;
+    }
+
+    .modern-card-header h5 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .modern-card-header i {
+        width: 24px;
+        height: 24px;
+        color: var(--accent);
+    }
+
+    .modern-card-body {
+        padding: 2rem;
+    }
+
+    /* Modern buttons */
+    .modern-btn {
+        background: var(--gradient-accent);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow-md);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .modern-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .modern-btn:hover::before {
+        left: 100%;
+    }
+
+    .modern-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-xl);
+        color: white;
+        text-decoration: none;
+    }
+
+    .modern-btn.outline {
+        background: transparent;
+        color: var(--accent);
+        border: 2px solid var(--accent);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
+
+    .modern-btn.outline:hover {
+        background: var(--accent);
+        color: white;
+    }
+
+    .modern-btn.success {
+        background: var(--gradient-success);
+    }
+
+    .modern-btn.warning {
+        background: var(--gradient-warning);
+    }
+
+    .modern-btn.secondary {
+        background: var(--gradient-secondary);
+    }
+
+    /* Modern table styling */
+    .modern-table {
+        background: rgba(255, 255, 255, 0.7);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .modern-table th {
+        background: rgba(255, 255, 255, 0.8);
+        border: none;
+        padding: 1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .modern-table td {
+        border: none;
+        padding: 1rem;
+        color: var(--text-secondary);
+        vertical-align: middle;
+    }
+
+    .modern-table tbody tr {
+        transition: all 0.3s ease;
+    }
+
+    .modern-table tbody tr:hover {
+        background: rgba(255, 255, 255, 0.9);
+        transform: translateX(4px);
+    }
+
+    /* Progress bar styling */
+    .modern-progress {
+        height: 8px;
+        background: rgba(59, 130, 246, 0.1);
+        border-radius: 4px;
+        margin-bottom: 0.5rem;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .modern-progress-bar {
+        height: 100%;
+        background: var(--gradient-accent);
+        border-radius: 4px;
+        transition: width 1s ease-out;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .modern-progress-bar::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        animation: shimmer 2s infinite;
+    }
+
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+
+    /* Activity list styling */
+    .activity-item {
+        padding: 1.5rem;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.7);
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .activity-item::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: var(--gradient-warning);
+    }
+
+    .activity-item:hover {
+        transform: translateX(4px);
+        box-shadow: var(--shadow-md);
+        background: rgba(255, 255, 255, 0.9);
+    }
+
+    .activity-date {
+        font-weight: 700;
+        color: var(--text-primary);
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .activity-desc {
+        color: var(--text-secondary);
+        margin-bottom: 0.75rem;
+        line-height: 1.6;
+    }
+
+    .activity-hours {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    /* Badge styling */
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .status-badge.warning {
+        background: var(--warning-light);
+        color: var(--warning);
+        border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    /* Quick stats sidebar */
+    .quick-stats {
+        background: rgba(255, 255, 255, 0.7);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .quick-stats .stat-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border);
+        color: var(--text-secondary);
+    }
+
+    .quick-stats .stat-row:last-child {
+        border-bottom: none;
+    }
+
+    .quick-stats .stat-row strong {
+        color: var(--text-primary);
+        font-weight: 600;
+    }
+
+    /* No data states */
+    .no-data {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: var(--text-muted);
+    }
+
+    .no-data i {
+        width: 48px;
+        height: 48px;
+        color: var(--text-muted);
+        margin-bottom: 1rem;
+    }
+
+    /* Action buttons styling */
+    .action-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        margin: 0 0.25rem;
+    }
+
+    .action-btn.success {
+        background: var(--success-light);
+        color: var(--success);
+    }
+
+    .action-btn.success:hover {
+        background: var(--success);
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .action-btn.info {
+        background: var(--accent-light);
+        color: var(--accent);
+    }
+
+    .action-btn.info:hover {
+        background: var(--accent);
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .action-btn.primary {
+        background: var(--accent-light);
+        color: var(--accent);
+    }
+
+    .action-btn.primary:hover {
+        background: var(--accent);
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .welcome-title {
+            font-size: 1.75rem;
+            flex-direction: column;
+            text-align: center;
+            gap: 1rem;
+        }
+
+        .dashboard-header {
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .modern-stat-card {
+            padding: 1.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+        }
+
+        .modern-card-body {
+            padding: 1.5rem;
+        }
+    }
+</style>
+
+<!-- Lucide Icons -->
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+{% endblock %}
+
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">
-        <i class="fas fa-chalkboard-teacher me-2"></i>
-        Faculty Dashboard
-    </h1>
-    <span class="badge bg-primary fs-6">{{ faculty.employee_id }}</span>
+<!-- Modern Dashboard Header -->
+<div class="dashboard-header">
+    <div class="d-flex justify-content-between align-items-center flex-wrap">
+        <div class="welcome-title">
+            <div class="welcome-icon">
+                <i data-lucide="user-check"></i>
+            </div>
+            <div>
+                Welcome back, {{ faculty.user.get_full_name }}
+            </div>
+        </div>
+        <span class="faculty-badge">
+            <i data-lucide="id-card" style="width: 18px; height: 18px; margin-right: 0.5rem;"></i>
+            {{ faculty.employee_id }}
+        </span>
+    </div>
 </div>
 
-<!-- Statistics Overview -->
+<!-- Modern Statistics Cards -->
 <div class="row mb-4">
-    <div class="col-md-6 col-lg-3 mb-3">
-        <div class="card stat-card">
-            <div class="card-body text-center">
-                <i class="fas fa-users fa-2x mb-2"></i>
-                <h5 class="card-title">Supervised Students</h5>
-                <h3 class="mb-0">{{ total_students }}</h3>
-                <small>active placements</small>
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="modern-stat-card">
+            <div class="stat-icon students">
+                <i data-lucide="users"></i>
             </div>
+            <div class="stat-title">Supervised Students</div>
+            <div class="stat-value">{{ total_students }}</div>
+            <div class="stat-subtitle">active placements</div>
         </div>
     </div>
     
-    <div class="col-md-6 col-lg-3 mb-3">
-        <div class="card stat-card">
-            <div class="card-body text-center">
-                <i class="fas fa-clock fa-2x mb-2"></i>
-                <h5 class="card-title">Pending Approvals</h5>
-                <h3 class="mb-0">{{ pending_activities.count }}</h3>
-                <small>activity logs</small>
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="modern-stat-card">
+            <div class="stat-icon approvals">
+                <i data-lucide="clock"></i>
             </div>
+            <div class="stat-title">Pending Approvals</div>
+            <div class="stat-value">{{ pending_activities.count }}</div>
+            <div class="stat-subtitle">activity logs</div>
         </div>
     </div>
     
-    <div class="col-md-6 col-lg-3 mb-3">
-        <div class="card stat-card">
-            <div class="card-body text-center">
-                <i class="fas fa-star fa-2x mb-2"></i>
-                <h5 class="card-title">Evaluations Due</h5>
-                <h3 class="mb-0">{{ pending_evaluations }}</h3>
-                <small>this week</small>
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="modern-stat-card">
+            <div class="stat-icon evaluations">
+                <i data-lucide="star"></i>
             </div>
+            <div class="stat-title">Evaluations Due</div>
+            <div class="stat-value">{{ pending_evaluations }}</div>
+            <div class="stat-subtitle">this week</div>
         </div>
     </div>
     
-    <div class="col-md-6 col-lg-3 mb-3">
-        <div class="card stat-card">
-            <div class="card-body text-center">
-                <i class="fas fa-envelope fa-2x mb-2"></i>
-                <h5 class="card-title">Unread Messages</h5>
-                <h3 class="mb-0">{{ unread_messages.count }}</h3>
-                <small>new messages</small>
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="modern-stat-card">
+            <div class="stat-icon messages">
+                <i data-lucide="mail"></i>
             </div>
+            <div class="stat-title">Unread Messages</div>
+            <div class="stat-value">{{ unread_messages.count }}</div>
+            <div class="stat-subtitle">new messages</div>
         </div>
     </div>
 </div>
@@ -61,20 +669,23 @@
 <!-- Supervised Students -->
 <div class="row mb-4">
     <div class="col-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">
-                    <i class="fas fa-users me-2"></i>
-                    Supervised Students
-                </h5>
-                <a href="{% url 'ojt_tracker:faculty_students' %}" class="btn btn-sm btn-primary">
-                    View All
-                </a>
+        <div class="modern-card">
+            <div class="modern-card-header">
+                <div class="d-flex justify-content-between align-items-center w-100">
+                    <h5>
+                        <i data-lucide="users"></i>
+                        Supervised Students
+                    </h5>
+                    <a href="{% url 'ojt_tracker:faculty_students' %}" class="modern-btn">
+                        <i data-lucide="arrow-right" style="width: 16px; height: 16px;"></i>
+                        View All
+                    </a>
+                </div>
             </div>
-            <div class="card-body">
+            <div class="modern-card-body">
                 {% if supervised_placements %}
                 <div class="table-responsive">
-                    <table class="table table-hover">
+                    <table class="table modern-table">
                         <thead>
                             <tr>
                                 <th>Student</th>
@@ -96,8 +707,8 @@
                                 </td>
                                 <td>{{ placement.company.name }}</td>
                                 <td>
-                                    <div class="progress progress-custom">
-                                        <div class="progress-bar" style="width: {{ placement.completion_percentage }}%"></div>
+                                    <div class="modern-progress">
+                                        <div class="modern-progress-bar" style="width: {{ placement.completion_percentage }}%"></div>
                                     </div>
                                     <small>{{ placement.completion_percentage|floatformat:1 }}%</small>
                                 </td>
@@ -106,18 +717,18 @@
                                         {% if last_activity %}
                                             {{ last_activity.date }}
                                         {% else %}
-                                            No activities
+                                            <span class="text-muted">No activities</span>
                                         {% endif %}
                                     {% endwith %}
                                 </td>
                                 <td>
-                                    <div class="btn-group btn-group-sm">
-                                        <a href="#" class="btn btn-outline-primary btn-sm">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a href="#" class="btn btn-outline-success btn-sm">
-                                            <i class="fas fa-star"></i>
-                                        </a>
+                                    <div class="d-flex">
+                                        <button class="action-btn primary" title="View Details">
+                                            <i data-lucide="eye" style="width: 16px; height: 16px;"></i>
+                                        </button>
+                                        <button class="action-btn success" title="Evaluate">
+                                            <i data-lucide="star" style="width: 16px; height: 16px;"></i>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -126,79 +737,88 @@
                     </table>
                 </div>
                 {% else %}
-                <p class="text-muted">No students assigned yet.</p>
+                <div class="no-data">
+                    <i data-lucide="users"></i>
+                    <h5>No students assigned yet</h5>
+                    <p>Students will appear here once they are assigned to you.</p>
+                </div>
                 {% endif %}
             </div>
         </div>
     </div>
 </div>
 
-<!-- Pending Activity Approvals -->
+<!-- Content Row -->
 <div class="row">
-    <div class="col-lg-8">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">
-                    <i class="fas fa-clock me-2"></i>
-                    Pending Activity Approvals
-                </h5>
-                <span class="badge bg-warning">{{ pending_activities.count }} pending</span>
+    <!-- Pending Activity Approvals -->
+    <div class="col-lg-8 mb-4">
+        <div class="modern-card">
+            <div class="modern-card-header">
+                <div class="d-flex justify-content-between align-items-center w-100">
+                    <h5>
+                        <i data-lucide="clock"></i>
+                        Pending Activity Approvals
+                    </h5>
+                    <span class="status-badge warning">{{ pending_activities.count }} pending</span>
+                </div>
             </div>
-            <div class="card-body">
+            <div class="modern-card-body">
                 {% if pending_activities %}
-                <div class="list-group list-group-flush">
                     {% for activity in pending_activities|slice:":5" %}
-                    <div class="list-group-item">
+                    <div class="activity-item">
                         <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <h6 class="mb-1">
+                            <div class="flex-grow-1">
+                                <div class="activity-date">
                                     {{ activity.placement.student.user.get_full_name }} - {{ activity.date }}
-                                </h6>
-                                <p class="mb-1">{{ activity.activities|truncatewords:15 }}</p>
-                                <small>{{ activity.hours_worked }} hours worked</small>
+                                </div>
+                                <div class="activity-desc">{{ activity.activities|truncatewords:15 }}</div>
+                                <div class="activity-hours">
+                                    <i data-lucide="clock" style="width: 14px; height: 14px; margin-right: 0.25rem;"></i>
+                                    {{ activity.hours_worked }} hours worked
+                                </div>
                             </div>
-                            <div class="btn-group btn-group-sm">
-                                <button class="btn btn-success btn-sm" onclick="approveActivity({{ activity.id }})" title="Approve Activity">
-                                    <i class="fas fa-check"></i>
+                            <div class="d-flex">
+                                <button class="action-btn success" onclick="approveActivity({{ activity.id }})" title="Approve Activity">
+                                    <i data-lucide="check" style="width: 16px; height: 16px;"></i>
                                 </button>
-                                <button class="btn btn-info btn-sm" onclick="viewActivity({{ activity.id }})" title="View Activity Details">
-                                    <i class="fas fa-eye"></i>
+                                <button class="action-btn info" onclick="viewActivity({{ activity.id }})" title="View Activity Details">
+                                    <i data-lucide="eye" style="width: 16px; height: 16px;"></i>
                                 </button>
                             </div>
                         </div>
                     </div>
                     {% endfor %}
-                </div>
                 {% else %}
-                <p class="text-muted">No pending approvals.</p>
+                    <div class="no-data">
+                        <i data-lucide="check-circle"></i>
+                        <h5>No pending approvals</h5>
+                        <p>All activity logs have been reviewed.</p>
+                    </div>
                 {% endif %}
             </div>
         </div>
     </div>
     
-    <div class="col-lg-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-chart-line me-2"></i>
+    <!-- Quick Stats -->
+    <div class="col-lg-4 mb-4">
+        <div class="modern-card">
+            <div class="modern-card-header">
+                <h5>
+                    <i data-lucide="bar-chart-3"></i>
                     Quick Stats
                 </h5>
             </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between">
+            <div class="modern-card-body">
+                <div class="quick-stats">
+                    <div class="stat-row">
                         <span>Average Completion</span>
                         <strong>{{ avg_completion|floatformat:1 }}%</strong>
                     </div>
-                </div>
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between">
+                    <div class="stat-row">
                         <span>Department</span>
                         <strong>{{ faculty.department }}</strong>
                     </div>
-                </div>
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between">
+                    <div class="stat-row">
                         <span>Position</span>
                         <strong>{{ faculty.position }}</strong>
                     </div>
@@ -211,33 +831,37 @@
 <!-- Quick Actions -->
 <div class="row mt-4">
     <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-rocket me-2"></i>
+        <div class="modern-card">
+            <div class="modern-card-header">
+                <h5>
+                    <i data-lucide="zap"></i>
                     Quick Actions
                 </h5>
             </div>
-            <div class="card-body">
+            <div class="modern-card-body">
                 <div class="row">
-                    <div class="col-md-3 mb-2">
-                        <a href="{% url 'ojt_tracker:faculty_evaluations' %}" class="btn btn-outline-primary w-100">
-                            <i class="fas fa-star me-2"></i>Create Evaluation
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'ojt_tracker:faculty_evaluations' %}" class="modern-btn outline w-100 justify-content-center">
+                            <i data-lucide="star" style="width: 18px; height: 18px;"></i>
+                            Create Evaluation
                         </a>
                     </div>
-                    <div class="col-md-3 mb-2">
-                        <a href="{% url 'ojt_tracker:faculty_reports' %}" class="btn btn-outline-success w-100">
-                            <i class="fas fa-file-alt me-2"></i>Generate Report
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'ojt_tracker:faculty_reports' %}" class="modern-btn outline w-100 justify-content-center">
+                            <i data-lucide="file-text" style="width: 18px; height: 18px;"></i>
+                            Generate Report
                         </a>
                     </div>
-                    <div class="col-md-3 mb-2">
-                        <a href="{% url 'ojt_tracker:messages' %}" class="btn btn-outline-info w-100">
-                            <i class="fas fa-envelope me-2"></i>Send Message
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'ojt_tracker:messages' %}" class="modern-btn outline w-100 justify-content-center">
+                            <i data-lucide="mail" style="width: 18px; height: 18px;"></i>
+                            Send Message
                         </a>
                     </div>
-                    <div class="col-md-3 mb-2">
-                        <a href="{% url 'ojt_tracker:faculty_students' %}" class="btn btn-outline-warning w-100">
-                            <i class="fas fa-users me-2"></i>View All Students
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'ojt_tracker:faculty_students' %}" class="modern-btn outline w-100 justify-content-center">
+                            <i data-lucide="users" style="width: 18px; height: 18px;"></i>
+                            View All Students
                         </a>
                     </div>
                 </div>
@@ -249,6 +873,9 @@
 
 {% block extra_js %}
 <script>
+// Initialize Lucide icons
+lucide.createIcons();
+
 // Get CSRF token
 function getCSRFToken() {
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
@@ -299,5 +926,123 @@ function approveActivity(activityId) {
 function viewActivity(activityId) {
     window.open(`/api/activity-logs/${activityId}/`, '_blank');
 }
+
+// Auto-refresh unread message count with modern animation
+function updateUnreadCount() {
+    fetch('/api/messages/unread/', {
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': getCSRFToken(),
+            'Content-Type': 'application/json',
+        },
+        credentials: 'same-origin'
+    })
+        .then(response => response.json())
+        .then(data => {
+            const unreadElements = document.querySelectorAll('.stat-value');
+            if (unreadElements.length >= 4) {
+                const messageElement = unreadElements[3]; // Messages is the 4th stat card
+                if (messageElement && messageElement.textContent !== data.length.toString()) {
+                    messageElement.style.transform = 'scale(1.1)';
+                    messageElement.style.color = 'var(--accent)';
+                    messageElement.textContent = data.length;
+                    
+                    setTimeout(() => {
+                        messageElement.style.transform = 'scale(1)';
+                        messageElement.style.color = 'var(--text-primary)';
+                    }, 300);
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching unread messages:', error);
+        });
+}
+
+// Update message count every 30 seconds
+setInterval(updateUnreadCount, 30000);
+
+// Add scroll animations
+const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+};
+
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+        }
+    });
+}, observerOptions);
+
+// Observe elements for scroll animation
+document.addEventListener('DOMContentLoaded', function() {
+    const elementsToAnimate = document.querySelectorAll('.modern-card, .modern-stat-card');
+    elementsToAnimate.forEach(el => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(20px)';
+        el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(el);
+    });
+    
+    // Initialize progress bar animation
+    setTimeout(() => {
+        const progressBars = document.querySelectorAll('.modern-progress-bar');
+        progressBars.forEach(bar => {
+            const width = bar.style.width;
+            bar.style.width = '0%';
+            setTimeout(() => {
+                bar.style.width = width;
+            }, 500);
+        });
+    }, 1000);
+});
+
+// Add ripple effect to buttons
+document.querySelectorAll('.modern-btn, .action-btn').forEach(button => {
+    button.addEventListener('click', function(e) {
+        const ripple = document.createElement('span');
+        const rect = this.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        const x = e.clientX - rect.left - size / 2;
+        const y = e.clientY - rect.top - size / 2;
+        
+        ripple.style.width = ripple.style.height = size + 'px';
+        ripple.style.left = x + 'px';
+        ripple.style.top = y + 'px';
+        ripple.classList.add('ripple');
+        
+        ripple.style.position = 'absolute';
+        ripple.style.borderRadius = '50%';
+        ripple.style.background = 'rgba(255, 255, 255, 0.3)';
+        ripple.style.transform = 'scale(0)';
+        ripple.style.animation = 'ripple 0.6s linear';
+        ripple.style.pointerEvents = 'none';
+        
+        this.appendChild(ripple);
+        
+        setTimeout(() => {
+            ripple.remove();
+        }, 600);
+    });
+});
+
+// Add CSS for ripple animation
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes ripple {
+        to {
+            transform: scale(4);
+            opacity: 0;
+        }
+    }
+    .modern-btn, .action-btn {
+        position: relative;
+        overflow: hidden;
+    }
+`;
+document.head.appendChild(style);
 </script>
 {% endblock %} 
