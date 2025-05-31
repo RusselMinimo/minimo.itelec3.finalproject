@@ -16,19 +16,27 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from django.views.generic import TemplateView
-from frontend.views import CrudTestView
 from django.conf import settings
 from django.conf.urls.static import static
+from django.shortcuts import redirect
+
+def redirect_to_login(request):
+    """Redirect root URL to login page"""
+    return redirect('authentication:login')
 
 urlpatterns = [
+    path('', redirect_to_login, name='home'),  # Redirect root to login
     path('admin/', admin.site.urls),
-    path('api/auth/', include('authentication.urls')),
-    path('api/', include('api.urls')),
-    path('', TemplateView.as_view(template_name='frontend/index.html'), name='home'),
-    path('crud/', CrudTestView.as_view(), name='crud_test'),
+    path('auth/', include('authentication.urls')),
+    path('app/', include('ojt_tracker.urls')),  # OJT Tracker under /app/
 ]
 
-# Serve media files in development
+# Serve media files during development
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    # Static files are served automatically by Django during development
+
+# Admin site customization
+admin.site.site_header = "OJT Tracker Administration"
+admin.site.site_title = "OJT Tracker Admin"
+admin.site.index_title = "Welcome to OJT Tracker Administration"

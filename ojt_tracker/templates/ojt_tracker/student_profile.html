@@ -1,0 +1,339 @@
+{% extends 'ojt_tracker/base.html' %}
+{% load static %}
+
+{% block title %}Profile - OJT Tracker{% endblock %}
+
+{% block content %}
+<!-- Header Section -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1 fw-semibold">Student Profile</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{% url 'ojt_tracker:student_dashboard' %}" class="text-decoration-none">Dashboard</a></li>
+                <li class="breadcrumb-item active text-muted">Profile</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Profile Overview Card -->
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <!-- Profile Header Section -->
+                    <div class="row align-items-center mb-5">
+                        <div class="col-auto">
+                            <div class="position-relative">
+                                {% if form.instance.profile_picture %}
+                                    <img src="{{ form.instance.profile_picture.url }}" 
+                                         alt="Profile Picture" 
+                                         class="rounded-circle"
+                                         style="width: 100px; height: 100px; object-fit: cover; border: 4px solid #f8f9fa;">
+                                {% else %}
+                                    <div class="rounded-circle bg-light d-flex align-items-center justify-content-center" 
+                                         style="width: 100px; height: 100px; border: 4px solid #f8f9fa;">
+                                        <i data-feather="user" style="width: 2.5rem; height: 2.5rem;" class="text-muted"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col">
+                            <h4 class="mb-1 fw-bold">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                            <p class="text-muted mb-2">{{ form.instance.student_id|default:"Student ID not set" }}</p>
+                            <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2">
+                                {{ form.instance.program.name|default:"No Program Assigned" }}
+                            </span>
+                        </div>
+                        <div class="col-auto">
+                            <div class="position-relative d-inline-block">
+                                <label for="{{ form.profile_picture.id_for_label }}" class="btn btn-outline-primary btn-sm">
+                                    <i data-feather="camera" class="me-2" style="width: 16px; height: 16px;"></i>
+                                    Change Photo
+                                </label>
+                                <input type="file" 
+                                       id="{{ form.profile_picture.id_for_label }}" 
+                                       name="{{ form.profile_picture.name }}"
+                                       class="position-absolute top-0 start-0 w-100 h-100 opacity-0" 
+                                       style="cursor: pointer;"
+                                       accept="image/*">
+                                {% if form.profile_picture.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.profile_picture.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-4">
+                        <!-- Personal Information Section -->
+                        <div class="col-lg-6">
+                            <div class="bg-light bg-opacity-50 rounded-3 p-4 h-100">
+                                <h5 class="mb-4 d-flex align-items-center fw-semibold">
+                                    <i data-feather="user" class="me-2" style="width: 20px; height: 20px;"></i>
+                                    Personal Information
+                                </h5>
+                                
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label for="{{ form.student_id.id_for_label }}" class="form-label fw-medium">Student ID</label>
+                                        {{ form.student_id }}
+                                        {% if form.student_id.errors %}
+                                            <div class="text-danger small mt-1">
+                                                {{ form.student_id.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="col-sm-6">
+                                        <label for="{{ form.year_level.id_for_label }}" class="form-label fw-medium">Year Level</label>
+                                        {{ form.year_level }}
+                                        {% if form.year_level.errors %}
+                                            <div class="text-danger small mt-1">
+                                                {{ form.year_level.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="col-sm-6">
+                                        <label for="{{ form.section.id_for_label }}" class="form-label fw-medium">Section</label>
+                                        {{ form.section }}
+                                        {% if form.section.errors %}
+                                            <div class="text-danger small mt-1">
+                                                {{ form.section.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="col-12">
+                                        <label for="{{ form.program.id_for_label }}" class="form-label fw-medium">OJT Program</label>
+                                        {{ form.program }}
+                                        {% if form.program.errors %}
+                                            <div class="text-danger small mt-1">
+                                                {{ form.program.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contact Information Section -->
+                        <div class="col-lg-6">
+                            <div class="bg-light bg-opacity-50 rounded-3 p-4 h-100">
+                                <h5 class="mb-4 d-flex align-items-center fw-semibold">
+                                    <i data-feather="phone" class="me-2" style="width: 20px; height: 20px;"></i>
+                                    Contact Information
+                                </h5>
+                                
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label for="{{ form.contact_number.id_for_label }}" class="form-label fw-medium">Phone Number</label>
+                                        {{ form.contact_number }}
+                                        {% if form.contact_number.errors %}
+                                            <div class="text-danger small mt-1">
+                                                {{ form.contact_number.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="col-12">
+                                        <label for="{{ form.emergency_contact.id_for_label }}" class="form-label fw-medium">Emergency Contact Name</label>
+                                        {{ form.emergency_contact }}
+                                        {% if form.emergency_contact.errors %}
+                                            <div class="text-danger small mt-1">
+                                                {{ form.emergency_contact.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="col-12">
+                                        <label for="{{ form.emergency_phone.id_for_label }}" class="form-label fw-medium">Emergency Contact Phone</label>
+                                        {{ form.emergency_phone }}
+                                        {% if form.emergency_phone.errors %}
+                                            <div class="text-danger small mt-1">
+                                                {{ form.emergency_phone.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Address Information Section -->
+                        <div class="col-12">
+                            <div class="bg-light bg-opacity-50 rounded-3 p-4">
+                                <h5 class="mb-4 d-flex align-items-center fw-semibold">
+                                    <i data-feather="map-pin" class="me-2" style="width: 20px; height: 20px;"></i>
+                                    Address Information
+                                </h5>
+                                
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label for="{{ form.address.id_for_label }}" class="form-label fw-medium">Complete Address</label>
+                                        {{ form.address }}
+                                        <div class="form-text">Please provide your complete residential address</div>
+                                        {% if form.address.errors %}
+                                            <div class="text-danger small mt-1">
+                                                {{ form.address.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-end gap-3 mt-5 pt-4 border-top">
+                        <a href="{% url 'ojt_tracker:student_dashboard' %}" class="btn btn-outline-secondary">
+                            <i data-feather="x" class="me-2" style="width: 16px; height: 16px;"></i>
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i data-feather="save" class="me-2" style="width: 16px; height: 16px;"></i>
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Information Cards -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <h5 class="mb-4 d-flex align-items-center fw-semibold">
+                    <i data-feather="bookmark" class="me-2" style="width: 20px; height: 20px;"></i>
+                    OJT Status
+                </h5>
+                
+                {% if request.user.student_profile.placements.exists %}
+                    {% for placement in request.user.student_profile.placements.all %}
+                        <div class="mb-3 p-3 bg-light bg-opacity-50 rounded-2">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="mb-0 fw-medium">{{ placement.company.name }}</h6>
+                                {% if placement.status == 'active' %}
+                                    <span class="badge bg-success">{{ placement.get_status_display }}</span>
+                                {% elif placement.status == 'pending' %}
+                                    <span class="badge bg-warning">{{ placement.get_status_display }}</span>
+                                {% elif placement.status == 'completed' %}
+                                    <span class="badge bg-primary">{{ placement.get_status_display }}</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ placement.get_status_display }}</span>
+                                {% endif %}
+                            </div>
+                            <p class="text-muted small mb-2">{{ placement.position }} • {{ placement.department }}</p>
+                            <div class="progress mb-2" style="height: 6px;">
+                                <div class="progress-bar" role="progressbar" 
+                                     style="width: {{ placement.completion_percentage }}%"></div>
+                            </div>
+                            <div class="d-flex justify-content-between small text-muted">
+                                <span>{{ placement.total_hours_completed }}/{{ placement.total_hours_required }} hours</span>
+                                <span>{{ placement.completion_percentage|floatformat:0 }}% complete</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <i data-feather="briefcase" class="text-muted mb-3" style="width: 48px; height: 48px;"></i>
+                        <p class="text-muted mb-0">No OJT placement assigned yet</p>
+                        <small class="text-muted">Contact your coordinator for placement information</small>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <h5 class="mb-4 d-flex align-items-center fw-semibold">
+                    <i data-feather="calendar" class="me-2" style="width: 20px; height: 20px;"></i>
+                    Recent Activity
+                </h5>
+                
+                <div class="text-center py-4">
+                    <i data-feather="activity" class="text-muted mb-3" style="width: 48px; height: 48px;"></i>
+                    <p class="text-muted mb-0">No recent activities</p>
+                    <small class="text-muted">Your recent OJT activities will appear here</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-control, .form-select {
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        transition: all 0.15s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .form-label.fw-medium {
+        color: #374151;
+        margin-bottom: 0.5rem;
+    }
+    
+    .badge.bg-primary.bg-opacity-10 {
+        background-color: rgba(59, 130, 246, 0.1) !important;
+        color: #1d4ed8 !important;
+        font-weight: 500;
+        font-size: 0.8rem;
+    }
+    
+    .card {
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Initialize Feather icons
+feather.replace();
+
+// Handle profile picture preview
+document.getElementById('{{ form.profile_picture.id_for_label }}').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const imgContainer = document.querySelector('.rounded-circle');
+            
+            if (imgContainer.tagName === 'IMG') {
+                // If it's already an image, just update the src
+                imgContainer.src = e.target.result;
+            } else {
+                // If it's a placeholder div, replace it with an image
+                const newImg = document.createElement('img');
+                newImg.src = e.target.result;
+                newImg.alt = 'Profile Picture';
+                newImg.className = 'rounded-circle';
+                newImg.style.cssText = 'width: 100px; height: 100px; object-fit: cover; border: 4px solid #f8f9fa;';
+                imgContainer.parentNode.replaceChild(newImg, imgContainer);
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+});
+</script>
+{% endblock %} 

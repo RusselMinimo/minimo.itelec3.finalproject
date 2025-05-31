@@ -1,0 +1,303 @@
+{% extends 'ojt_tracker/base.html' %}
+
+{% block title %}Faculty Dashboard - OJT Tracker{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+        <i class="fas fa-chalkboard-teacher me-2"></i>
+        Faculty Dashboard
+    </h1>
+    <span class="badge bg-primary fs-6">{{ faculty.employee_id }}</span>
+</div>
+
+<!-- Statistics Overview -->
+<div class="row mb-4">
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="fas fa-users fa-2x mb-2"></i>
+                <h5 class="card-title">Supervised Students</h5>
+                <h3 class="mb-0">{{ total_students }}</h3>
+                <small>active placements</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="fas fa-clock fa-2x mb-2"></i>
+                <h5 class="card-title">Pending Approvals</h5>
+                <h3 class="mb-0">{{ pending_activities.count }}</h3>
+                <small>activity logs</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="fas fa-star fa-2x mb-2"></i>
+                <h5 class="card-title">Evaluations Due</h5>
+                <h3 class="mb-0">{{ pending_evaluations }}</h3>
+                <small>this week</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="fas fa-envelope fa-2x mb-2"></i>
+                <h5 class="card-title">Unread Messages</h5>
+                <h3 class="mb-0">{{ unread_messages.count }}</h3>
+                <small>new messages</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Supervised Students -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-users me-2"></i>
+                    Supervised Students
+                </h5>
+                <a href="{% url 'ojt_tracker:faculty_students' %}" class="btn btn-sm btn-primary">
+                    View All
+                </a>
+            </div>
+            <div class="card-body">
+                {% if supervised_placements %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Company</th>
+                                <th>Progress</th>
+                                <th>Last Activity</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for placement in supervised_placements|slice:":5" %}
+                            <tr>
+                                <td>
+                                    <div>
+                                        <strong>{{ placement.student.user.get_full_name }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ placement.student.student_id }}</small>
+                                    </div>
+                                </td>
+                                <td>{{ placement.company.name }}</td>
+                                <td>
+                                    <div class="progress progress-custom">
+                                        <div class="progress-bar" style="width: {{ placement.completion_percentage }}%"></div>
+                                    </div>
+                                    <small>{{ placement.completion_percentage|floatformat:1 }}%</small>
+                                </td>
+                                <td>
+                                    {% with placement.activity_logs.first as last_activity %}
+                                        {% if last_activity %}
+                                            {{ last_activity.date }}
+                                        {% else %}
+                                            No activities
+                                        {% endif %}
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="#" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="#" class="btn btn-outline-success btn-sm">
+                                            <i class="fas fa-star"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">No students assigned yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pending Activity Approvals -->
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-clock me-2"></i>
+                    Pending Activity Approvals
+                </h5>
+                <span class="badge bg-warning">{{ pending_activities.count }} pending</span>
+            </div>
+            <div class="card-body">
+                {% if pending_activities %}
+                <div class="list-group list-group-flush">
+                    {% for activity in pending_activities|slice:":5" %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">
+                                    {{ activity.placement.student.user.get_full_name }} - {{ activity.date }}
+                                </h6>
+                                <p class="mb-1">{{ activity.activities|truncatewords:15 }}</p>
+                                <small>{{ activity.hours_worked }} hours worked</small>
+                            </div>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-success btn-sm" onclick="approveActivity({{ activity.id }})" title="Approve Activity">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button class="btn btn-info btn-sm" onclick="viewActivity({{ activity.id }})" title="View Activity Details">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">No pending approvals.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    Quick Stats
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Average Completion</span>
+                        <strong>{{ avg_completion|floatformat:1 }}%</strong>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Department</span>
+                        <strong>{{ faculty.department }}</strong>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Position</span>
+                        <strong>{{ faculty.position }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-rocket me-2"></i>
+                    Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <a href="{% url 'ojt_tracker:faculty_evaluations' %}" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-star me-2"></i>Create Evaluation
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{% url 'ojt_tracker:faculty_reports' %}" class="btn btn-outline-success w-100">
+                            <i class="fas fa-file-alt me-2"></i>Generate Report
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{% url 'ojt_tracker:messages' %}" class="btn btn-outline-info w-100">
+                            <i class="fas fa-envelope me-2"></i>Send Message
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{% url 'ojt_tracker:faculty_students' %}" class="btn btn-outline-warning w-100">
+                            <i class="fas fa-users me-2"></i>View All Students
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Get CSRF token
+function getCSRFToken() {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (!csrfToken) {
+        console.error('CSRF token not found');
+        return '';
+    }
+    return csrfToken.value;
+}
+
+function approveActivity(activityId) {
+    if (confirm('Are you sure you want to approve this activity?')) {
+        const csrfToken = getCSRFToken();
+        if (!csrfToken) {
+            alert('CSRF token not found. Please refresh the page and try again.');
+            return;
+        }
+        
+        fetch(`/api/activity-logs/${activityId}/approve/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.message || data.success) {
+                alert('Activity approved successfully!');
+                location.reload();
+            } else {
+                alert('Unexpected response from server');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error approving activity: ' + error.message);
+        });
+    }
+}
+
+function viewActivity(activityId) {
+    window.open(`/api/activity-logs/${activityId}/`, '_blank');
+}
+</script>
+{% endblock %} 

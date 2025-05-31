@@ -1,0 +1,1 @@
+# This file should be empty for standard Django app structure 

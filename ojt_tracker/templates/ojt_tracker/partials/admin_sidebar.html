@@ -1,0 +1,80 @@
+<div class="px-3 py-2">
+    <ul class="nav flex-column">
+        <li class="nav-item mb-1">
+            <a class="nav-link d-flex align-items-center" href="{% url 'ojt_tracker:dashboard' %}">
+                <i data-feather="home" class="me-3"></i>
+                Dashboard
+            </a>
+        </li>
+        
+        <!-- Management Section -->
+        <li class="nav-item mt-4 mb-2">
+            <div class="nav-link text-muted small fw-semibold text-uppercase">
+                System Management
+            </div>
+        </li>
+        <li class="nav-item mb-1">
+            <a class="nav-link d-flex align-items-center" href="{% url 'ojt_tracker:admin_companies' %}">
+                <i data-feather="building" class="me-3"></i>
+                Companies
+            </a>
+        </li>
+        <li class="nav-item mb-1">
+            <a class="nav-link d-flex align-items-center" href="{% url 'ojt_tracker:admin_programs' %}">
+                <i data-feather="book" class="me-3"></i>
+                Programs
+            </a>
+        </li>
+        <li class="nav-item mb-1">
+            <a class="nav-link d-flex align-items-center" href="{% url 'ojt_tracker:admin_placements' %}">
+                <i data-feather="users" class="me-3"></i>
+                Placements
+            </a>
+        </li>
+        
+        <!-- Communication Section -->
+        <li class="nav-item mt-4 mb-2">
+            <div class="nav-link text-muted small fw-semibold text-uppercase">
+                Communication
+            </div>
+        </li>
+        <li class="nav-item mb-1">
+            <a class="nav-link d-flex align-items-center" href="{% url 'ojt_tracker:messages' %}">
+                <i data-feather="mail" class="me-3"></i>
+                Messages
+            </a>
+        </li>
+        
+        <!-- Reports & Analysis Section -->
+        <li class="nav-item mt-4 mb-2">
+            <div class="nav-link text-muted small fw-semibold text-uppercase">
+                Reports & Analysis
+            </div>
+        </li>
+        <li class="nav-item mb-1">
+            <a class="nav-link d-flex align-items-center" href="{% url 'ojt_tracker:reports' %}">
+                <i data-feather="bar-chart-2" class="me-3"></i>
+                Reports
+            </a>
+        </li>
+        
+        <!-- System Tools Section -->
+        <li class="nav-item mt-4 mb-2">
+            <div class="nav-link text-muted small fw-semibold text-uppercase">
+                System Tools
+            </div>
+        </li>
+        <li class="nav-item mb-1">
+            <a class="nav-link d-flex align-items-center" href="/admin/">
+                <i data-feather="settings" class="me-3"></i>
+                Admin Panel
+            </a>
+        </li>
+        <li class="nav-item mb-1">
+            <a class="nav-link d-flex align-items-center" href="/api/">
+                <i data-feather="code" class="me-3"></i>
+                API Explorer
+            </a>
+        </li>
+    </ul>
+</div> 

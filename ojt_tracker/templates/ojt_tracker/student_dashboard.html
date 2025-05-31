@@ -1,0 +1,234 @@
+{% extends 'ojt_tracker/base.html' %}
+
+{% block title %}Student Dashboard - OJT Tracker{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+        <i class="fas fa-tachometer-alt me-2"></i>
+        Welcome, {{ student.user.get_full_name }}
+    </h1>
+    <span class="badge bg-primary fs-6">{{ student.student_id }}</span>
+</div>
+
+{% if current_placement %}
+<div class="row mb-4">
+    <!-- Progress Overview -->
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="fas fa-clock fa-2x mb-2"></i>
+                <h5 class="card-title">Hours Completed</h5>
+                <h3 class="mb-0">{{ total_hours_completed|floatformat:1 }}</h3>
+                <small>of {{ total_hours_required }} required</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="fas fa-percentage fa-2x mb-2"></i>
+                <h5 class="card-title">Completion</h5>
+                <h3 class="mb-0">{{ completion_percentage|floatformat:1 }}%</h3>
+                <div class="progress progress-custom mt-2">
+                    <div class="progress-bar" style="width: {{ completion_percentage }}%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="fas fa-calendar-check fa-2x mb-2"></i>
+                <h5 class="card-title">Attendance</h5>
+                <h3 class="mb-0">{{ attendance_rate|floatformat:1 }}%</h3>
+                <small>attendance rate</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="fas fa-envelope fa-2x mb-2"></i>
+                <h5 class="card-title">Messages</h5>
+                <h3 class="mb-0">{{ unread_messages.count }}</h3>
+                <small>unread messages</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Current Placement Info -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-building me-2"></i>
+                    Current Placement
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Company:</strong> {{ current_placement.company.name }}</p>
+                        <p><strong>Position:</strong> {{ current_placement.position }}</p>
+                        <p><strong>Department:</strong> {{ current_placement.department }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Start Date:</strong> {{ current_placement.start_date }}</p>
+                        <p><strong>End Date:</strong> {{ current_placement.end_date }}</p>
+                        <p><strong>Supervisor:</strong> {{ current_placement.supervisor.user.get_full_name }}</p>
+                    </div>
+                </div>
+                <span class="badge badge-status bg-success">{{ current_placement.get_status_display }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activities -->
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-clipboard-list me-2"></i>
+                    Recent Activities
+                </h5>
+                <a href="{% url 'ojt_tracker:activity_log' %}" class="btn btn-sm btn-primary">
+                    View All
+                </a>
+            </div>
+            <div class="card-body">
+                {% if recent_activities %}
+                    <div class="list-group list-group-flush">
+                        {% for activity in recent_activities %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">{{ activity.date }}</h6>
+                                    <p class="mb-1">{{ activity.activities|truncatewords:20 }}</p>
+                                    <small>{{ activity.hours_worked }} hours</small>
+                                </div>
+                                <span class="badge {% if activity.is_approved %}bg-success{% else %}bg-warning{% endif %}">
+                                    {% if activity.is_approved %}Approved{% else %}Pending{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">No activities logged yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-star me-2"></i>
+                    Recent Evaluations
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_evaluations %}
+                    {% for evaluation in recent_evaluations %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span class="fw-bold">{{ evaluation.get_evaluation_type_display }}</span>
+                            <span class="badge bg-primary">{{ evaluation.average_score|floatformat:1 }}/5</span>
+                        </div>
+                        <small class="text-muted">{{ evaluation.evaluation_period_start }}</small>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">No evaluations yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<div class="alert alert-info" role="alert">
+    <h4 class="alert-heading">No Active Placement</h4>
+    <p>You don't have an active OJT placement yet. Please contact your coordinator for placement assignment.</p>
+</div>
+{% endif %}
+
+<!-- Quick Actions -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-rocket me-2"></i>
+                    Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <a href="{% url 'ojt_tracker:activity_log' %}" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-plus me-2"></i>Log Activity
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{% url 'ojt_tracker:student_attendance' %}" class="btn btn-outline-success w-100">
+                            <i class="fas fa-calendar-check me-2"></i>View Attendance
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{% url 'ojt_tracker:messages' %}" class="btn btn-outline-info w-100">
+                            <i class="fas fa-envelope me-2"></i>Send Message
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{% url 'ojt_tracker:reports' %}" class="btn btn-outline-warning w-100">
+                            <i class="fas fa-chart-bar me-2"></i>View Reports
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Get CSRF token
+function getCSRFToken() {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+    return csrfToken ? csrfToken.value : '';
+}
+
+// Auto-refresh unread message count
+setInterval(function() {
+    fetch('/api/messages/unread/', {
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': getCSRFToken(),
+            'Content-Type': 'application/json',
+        },
+        credentials: 'same-origin'
+    })
+        .then(response => response.json())
+        .then(data => {
+            const unreadCount = document.getElementById('unreadCount');
+            if (unreadCount) {
+                unreadCount.textContent = data.length;
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching unread messages:', error);
+        });
+}, 30000); // Refresh every 30 seconds
+</script>
+{% endblock %} 

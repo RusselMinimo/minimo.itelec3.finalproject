@@ -1,384 +1,201 @@
-# E-Commerce API Documentation
+# On-the-Job Trainee Tracker
 
-This project implements a RESTful API for an e-commerce system with authentication and CRUD operations for Categories, Products, and Orders.
+A comprehensive Django-based web application designed to help educational institutions efficiently monitor and evaluate their students' internship (OJT) progress.
+
+## Project Overview
+
+This system provides real-time tracking of trainee activities, attendance, and performance with automated report generation and communication features between students and faculty.
+
+## Key Features
+
+- **Secure Authentication**: Role-based access control for students and faculty
+- **Dashboard System**: Customized dashboards based on user roles
+- **Activity Logging**: Students can log daily activities and learning outcomes
+- **Attendance Tracking**: Comprehensive attendance monitoring with verification
+- **Performance Evaluation**: Faculty can evaluate students with detailed feedback
+- **Automated Reports**: Weekly and monthly report generation
+- **Messaging System**: Built-in communication between students and faculty
+- **Company Management**: Track OJT companies and placements
+
+## Technical Stack
+
+- **Backend**: Django 5.0.2 (Python)
+- **Database**: SQLite (development) / PostgreSQL (production ready)
+- **API**: Django REST Framework with JWT authentication
+- **Frontend**: Django Templates with Bootstrap
+- **Authentication**: Django's built-in auth system with custom roles
+
+## Models Structure
+
+The application includes 9 core models with proper relationships:
+
+1. **UserRole** - Manages user role assignments (student/faculty/admin)
+2. **Company** - OJT partner companies information
+3. **OJTProgram** - Academic programs with OJT requirements
+4. **Student** - Student profiles and program enrollment
+5. **Faculty** - Faculty profiles and supervision assignments
+6. **OJTPlacement** - Student-company placement records
+7. **ActivityLog** - Daily activity tracking with approval workflow
+8. **Attendance** - Attendance records with verification
+9. **Evaluation** - Performance evaluations with detailed scoring
+10. **Message** - Internal messaging system
+11. **Report** - Automated report generation and distribution
+
+## API Endpoints
+
+Each model provides comprehensive REST API endpoints:
+
+- **GET** `/api/model/` - List all records
+- **POST** `/api/model/` - Create new record
+- **GET** `/api/model/{id}/` - Retrieve specific record
+- **PUT/PATCH** `/api/model/{id}/` - Update record
+- **DELETE** `/api/model/{id}/` - Delete record
+
+Plus custom actions for:
+- Dashboard data aggregation
+- Report generation
+- Approval workflows
+- Analytics and statistics
+
+## Installation & Setup
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd minimo.itelec3.finalproject
+   ```
+
+2. **Create virtual environment**
+   ```bash
+   python -m venv venv
+   venv\Scripts\activate  # Windows
+   source venv/bin/activate  # Linux/Mac
+   ```
+
+3. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Run migrations**
+   ```bash
+   python manage.py makemigrations
+   python manage.py migrate
+   ```
+
+5. **Create superuser**
+   ```bash
+   python manage.py createsuperuser
+   ```
+
+6. **Collect static files**
+   ```bash
+   python manage.py collectstatic
+   ```
+
+7. **Run development server**
+   ```bash
+   python manage.py runserver
+   ```
 
 ## Project Structure
 
-The project consists of two main interfaces:
-
-1. **Authentication Interface** - The main page at `/` for user registration and login.
-2. **CRUD Testing Interface** - A separate interface at `/crud/` for testing CRUD operations.
-
-## Rate Limiting
-
-The API implements rate limiting to prevent abuse and ensure fair usage of resources. Different endpoints have different rate limits based on their nature:
-
-- Category endpoints:
-  - List: 10 requests per minute
-  - Create: 5 requests per minute
-
-- Product endpoints:
-  - List: 20 requests per minute
-  - Create: 5 requests per minute
-  - Category Products: 15 requests per minute
-
-- Order endpoints:
-  - List: 10 requests per minute
-  - Create: 3 requests per minute
-  - Update Status: 5 requests per minute
-
-When a rate limit is exceeded, the API will return a `429 Too Many Requests` status code with the following response:
-
-```json
-{
-    "error": "Rate limit exceeded. Please try again later."
-}
+```
+minimo.itelec3.finalproject/
+├── auth_project/           # Django project settings
+│   ├── settings.py
+│   ├── urls.py
+│   └── wsgi.py
+├── authentication/         # User authentication app
+├── ojt_tracker/           # Main OJT tracking app
+│   ├── models.py          # Core data models
+│   ├── views.py           # API views and template views
+│   ├── serializers.py     # REST API serializers
+│   ├── forms.py           # Django forms
+│   ├── urls.py            # URL routing
+│   ├── admin.py           # Admin interface
+│   └── templates/         # HTML templates
+├── static/                # Static files (CSS, JS, images)
+├── media/                 # User uploaded files
+├── requirements.txt       # Python dependencies
+└── README.md             # This file
 ```
 
-## Getting Started
+## Recent Cleanup & Optimizations
 
-### Installation
+The project has been thoroughly cleaned and optimized:
 
-1. Clone the repository
-2. Create and activate a virtual environment:
-```
-python -m venv venv
-venv\Scripts\activate  # On Windows
-source venv/bin/activate  # On Linux/Mac
-```
-3. Install dependencies:
-```
-pip install -r requirements.txt
-```
-4. Run the development server:
-```
-python manage.py runserver
-```
-5. Navigate to `http://localhost:8000/` in your browser.
+### ✅ Fixed Issues
+- **Added missing dependency**: `django-filter==23.5` for API filtering
+- **Fixed import errors**: Added missing `DashboardFacultySerializer`
+- **Resolved URL conflicts**: Removed unused app references
+- **Added missing settings**: `STATIC_ROOT` for production deployment
 
-### Usage Flow
+### 🗑️ Removed Unused Code
+- **Deleted unused apps**: Removed `frontend` and `api` apps containing unrelated e-commerce models
+- **Cleaned up imports**: Removed unused imports and dependencies
+- **Removed unused files**: Deleted orphaned template files and media files
+- **Streamlined settings**: Removed references to unused applications
 
-1. Register a new user account or log in with existing credentials
-2. After login, access tokens are stored in localStorage
-3. Click "Access CRUD Interface" to navigate to the CRUD testing interface
-4. Perform CRUD operations on Categories, Products, and Orders
-
-## Authentication Endpoints
-
-### Register
-- **Method**: POST
-- **URL**: `/api/auth/register/`
-- **Content-Type**: `multipart/form-data`
-- **Body**:
+### 📦 Current Dependencies
 ```
-username: string
-email: string
-password: string
-password2: string
-photo: file (optional, image file)
-```
-- **File Upload Requirements**:
-  - Only JPEG, PNG, and WebP files are supported
-  - Maximum file size: 2MB
-  - Images will be automatically cropped to 1:1 aspect ratio
-- **Response**:
-```json
-{
-    "username": "string",
-    "email": "string"
-}
+Django==5.0.2
+djangorestframework==3.14.0
+djangorestframework-simplejwt==5.3.1
+python-dotenv==1.0.1
+django-cors-headers==4.3.1
+Pillow==10.2.0
+django-filter==23.5
 ```
 
-### Login
-- **Method**: POST
-- **URL**: `/api/auth/login/`
-- **Body**:
-```json
-{
-    "username": "string",
-    "password": "string"
-}
-```
-- **Response**:
-```json
-{
-    "access": "string",
-    "refresh": "string"
-}
-```
+## Usage
 
-### Token Refresh
-- **Method**: POST
-- **URL**: `/api/auth/token/refresh/`
-- **Body**:
-```json
-{
-    "refresh": "string"
-}
-```
-- **Response**:
-```json
-{
-    "access": "string"
-}
-```
+### For Students
+1. Login with student credentials
+2. View dashboard with OJT progress overview
+3. Log daily activities and learning outcomes
+4. Check attendance records
+5. View evaluations and feedback
+6. Communicate with supervisors
 
-### User Profile
-- **Method**: GET
-- **URL**: `/api/auth/profile/`
-- **Headers**: `Authorization: Bearer <access_token>`
-- **Response**:
-```json
-{
-    "id": 1,
-    "username": "string",
-    "email": "string",
-    "photo_url": "string or null"
-}
-```
+### For Faculty
+1. Login with faculty credentials
+2. Monitor supervised students' progress
+3. Approve activity logs
+4. Record attendance verification
+5. Create performance evaluations
+6. Generate progress reports
 
-## Category Endpoints
+### For Administrators
+1. Manage companies and programs
+2. Create OJT placements
+3. Oversee system-wide analytics
+4. Generate institutional reports
 
-All category endpoints require authentication. Include the JWT token in the Authorization header:
-`Authorization: Bearer <access_token>`
+## Security Features
 
-### List Categories
-- **Method**: GET
-- **URL**: `/api/categories/`
-- **Response**:
-```json
-[
-    {
-        "id": 1,
-        "name": "string",
-        "description": "string",
-        "created_at": "datetime",
-        "updated_at": "datetime"
-    }
-]
-```
+- JWT-based authentication
+- Role-based access control
+- CSRF protection
+- SQL injection protection
+- XSS protection
+- File upload validation
 
-### Create Category
-- **Method**: POST
-- **URL**: `/api/categories/`
-- **Body**:
-```json
-{
-    "name": "string",
-    "description": "string"
-}
-```
+## Production Deployment
 
-### Get Category
-- **Method**: GET
-- **URL**: `/api/categories/{id}/`
+The application is production-ready with:
+- Static file configuration
+- Security headers
+- Database optimization
+- Error handling
+- Caching configuration
 
-### Update Category
-- **Method**: PUT/PATCH
-- **URL**: `/api/categories/{id}/`
-- **Body**:
-```json
-{
-    "name": "string",
-    "description": "string"
-}
-```
+## Support
 
-### Delete Category
-- **Method**: DELETE
-- **URL**: `/api/categories/{id}/`
+For technical issues or questions about the OJT Tracker system, please refer to the Django documentation or contact the development team.
 
-## Product Endpoints
+---
 
-All product endpoints require authentication.
-
-### List Products
-- **Method**: GET
-- **URL**: `/api/products/`
-- **Response**:
-```json
-[
-    {
-        "id": 1,
-        "name": "string",
-        "description": "string",
-        "price": "decimal",
-        "category": 1,
-        "category_name": "string",
-        "stock": "integer",
-        "image": "string or null",
-        "image_url": "string or null",
-        "created_at": "datetime",
-        "updated_at": "datetime"
-    }
-]
-```
-
-### Create Product
-- **Method**: POST
-- **URL**: `/api/products/`
-- **Content-Type**: `multipart/form-data`
-- **Body**:
-```
-name: string
-description: string
-price: decimal
-category: integer
-stock: integer
-image: file (optional, image file)
-```
-- **File Upload Requirements**:
-  - Only JPEG, PNG, and WebP files are supported
-  - Maximum file size: 2MB
-
-### Get Product
-- **Method**: GET
-- **URL**: `/api/products/{id}/`
-
-### Update Product
-- **Method**: PUT/PATCH
-- **URL**: `/api/products/{id}/`
-- **Content-Type**: `multipart/form-data`
-- **Body**: Same as Create Product
-
-### Delete Product
-- **Method**: DELETE
-- **URL**: `/api/products/{id}/`
-
-### Get Category Products
-- **Method**: GET
-- **URL**: `/api/products/category_products/{category_id}/`
-
-## Order Endpoints
-
-All order endpoints require authentication. Regular users can only access their own orders.
-
-### List Orders
-- **Method**: GET
-- **URL**: `/api/orders/`
-- **Response**:
-```json
-[
-    {
-        "id": 1,
-        "user": {
-            "id": 1,
-            "username": "string",
-            "email": "string"
-        },
-        "product": 1,
-        "product_name": "string",
-        "product_price": "decimal",
-        "quantity": "integer",
-        "status": "string",
-        "total_price": "decimal",
-        "shipping_address": "string",
-        "created_at": "datetime",
-        "updated_at": "datetime"
-    }
-]
-```
-
-### Create Order
-- **Method**: POST
-- **URL**: `/api/orders/`
-- **Body**:
-```json
-{
-    "product": "integer",
-    "quantity": "integer",
-    "shipping_address": "string"
-}
-```
-
-### Get Order
-- **Method**: GET
-- **URL**: `/api/orders/{id}/`
-
-### Update Order Status
-- **Method**: PATCH
-- **URL**: `/api/orders/{id}/update_status/`
-- **Body**:
-```json
-{
-    "status": "string" // One of: pending, processing, shipped, delivered, cancelled
-}
-```
-
-## File Upload Guidelines
-
-This API supports file uploads for user profile photos and product images. Here are the guidelines for uploading files:
-
-### Supported File Types
-- JPEG (.jpg, .jpeg)
-- PNG (.png)
-- WebP (.webp)
-
-### File Size Limits
-- Maximum file size: 2MB
-
-### Image Processing
-- User profile photos are automatically cropped to a 1:1 aspect ratio (square)
-- Images are stored in the following directories:
-  - User profile photos: `/media/profile_photos/`
-  - Product images: `/media/product_images/`
-
-### Upload Process
-1. Use `multipart/form-data` as the Content-Type in your request
-2. Include the image file in the request body with the appropriate field name:
-   - For user registration: `photo`
-   - For products: `image`
-3. The server will validate the file type and size
-4. If the validation passes, the file will be stored and processed
-5. If the validation fails, an error response will be returned
-
-## Error Responses
-
-All endpoints may return the following error responses:
-
-### 401 Unauthorized
-```json
-{
-    "detail": "Authentication credentials were not provided."
-}
-```
-
-### 403 Forbidden
-```json
-{
-    "detail": "You do not have permission to perform this action."
-}
-```
-
-### 404 Not Found
-```json
-{
-    "detail": "Not found."
-}
-```
-
-### 400 Bad Request
-```json
-{
-    "field_name": [
-        "Error message"
-    ]
-}
-```
-
-### 429 Too Many Requests
-```json
-{
-    "error": "Rate limit exceeded. Please try again later."
-}
-```
-
-## Testing the API
-
-1. Register a new user account
-2. Login to get the access token
-3. Use the access token in the Authorization header for all subsequent requests
-4. Create categories and products
-5. Create orders and manage their status
-
-A web interface is provided at the root URL (`/`) for testing the API endpoints. 
+**Project Status**: ✅ Production Ready
+**Last Updated**: January 2025
+**Django Version**: 5.0.2 

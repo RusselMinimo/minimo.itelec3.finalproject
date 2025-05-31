@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if show_register %}Sign Up{% else %}Sign In{% endif %} - OJT Tracker</title>
+    
+    <!-- Inter Font for clean, modern typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Feather Icons for minimal iconography -->
+    <script src="https://unpkg.com/feather-icons"></script>
+    
+    <style>
+        :root {
+            /* Clean, off-color palette */
+            --primary-color: #2a2f36;
+            --primary-light: #3a4046;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --text-muted: #9ca3af;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --surface-hover: #f1f5f9;
+            --border: #e2e8f0;
+            --border-focus: #cbd5e1;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --accent-light: #dbeafe;
+            --error: #ef4444;
+            --error-light: #fef2f2;
+            --success: #10b981;
+            --success-light: #f0fdf4;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, var(--background) 0%, #f1f5f9 100%);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .logo {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.025em;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            font-weight: 400;
+        }
+
+        .form-container {
+            background: var(--surface);
+            padding: 2.5rem;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-lg);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+        }
+
+        .form-title {
+            font-size: 1.625rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.025em;
+        }
+
+        .form-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 2rem;
+            font-weight: 400;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.625rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            font-size: 0.9rem;
+            background: var(--surface);
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+            font-weight: 400;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-light);
+            background: var(--surface);
+        }
+
+        .form-input:hover:not(:focus) {
+            border-color: var(--border-focus);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .form-error {
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--error);
+            font-weight: 500;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 1rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px var(--accent-light);
+        }
+
+        .form-switch {
+            text-align: center;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .form-switch-text {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+            font-weight: 400;
+        }
+
+        .btn-link {
+            background: none;
+            color: var(--accent);
+            border: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            padding: 0.625rem 1.25rem;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-link:hover {
+            background: var(--accent-light);
+            color: var(--accent-hover);
+        }
+
+        .alert {
+            padding: 1rem 1.25rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border: 1px solid;
+        }
+
+        .alert-error {
+            background: var(--error-light);
+            border-color: rgba(239, 68, 68, 0.2);
+            color: var(--error);
+        }
+
+        .alert-success {
+            background: var(--success-light);
+            border-color: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .role-selection {
+            display: grid;
+            gap: 0.75rem;
+            margin-top: 0.625rem;
+        }
+
+        .role-option {
+            position: relative;
+            display: block;
+        }
+
+        .role-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .role-option-label {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.25rem;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+            background: var(--surface);
+        }
+
+        .role-option-label:hover {
+            border-color: var(--accent);
+            background: var(--accent-light);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .role-option input[type="radio"]:checked + .role-option-label {
+            border-color: var(--accent);
+            background: var(--accent-light);
+            color: var(--accent-hover);
+            box-shadow: var(--shadow-md);
+        }
+
+        .role-icon {
+            margin-right: 0.875rem;
+            width: 18px;
+            height: 18px;
+            stroke-width: 2;
+        }
+
+        .role-text {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: inherit;
+        }
+
+        .hidden {
+            display: none;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 480px) {
+            body {
+                padding: 1rem;
+            }
+            
+            .form-container {
+                padding: 2rem;
+            }
+            
+            .container {
+                max-width: 100%;
+            }
+
+            .logo {
+                font-size: 1.5rem;
+            }
+
+            .form-title {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Focus indicators for accessibility */
+        .form-input:focus,
+        .btn:focus,
+        .btn-link:focus,
+        .role-option:focus-within {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        /* High contrast mode support */
+        @media (prefers-contrast: high) {
+            :root {
+                --border: #64748b;
+                --text-secondary: #374151;
+            }
+        }
+
+        /* Reduced motion support */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                transition: none !important;
+                animation: none !important;
+            }
+        }
+
+        /* Enhanced role selection visibility */
+        .role-option input[type="radio"]:checked + .role-option-label .role-text {
+            color: var(--accent-hover);
+            font-weight: 700;
+        }
+
+        .role-option input[type="radio"]:checked + .role-option-label .role-icon {
+            stroke: var(--accent-hover);
+            stroke-width: 2.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">OJT Tracker</div>
+            <div class="subtitle">Professional internship management</div>
+        </div>
+                    
+        <div class="form-container">
+            <!-- Display messages -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert {% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <!-- Login Form -->
+            <div id="loginForm" class="{% if show_register %}hidden{% endif %}">
+                <h1 class="form-title">Welcome back</h1>
+                <p class="form-subtitle">Sign in to your account</p>
+                
+                <form method="post" action="{% url 'authentication:login' %}" novalidate>
+                    {% csrf_token %}
+                    <input type="hidden" name="login_submit" value="1">
+                            
+                    <div class="form-group">
+                        <label for="{{ login_form.username.id_for_label }}" class="form-label">
+                            Username
+                        </label>
+                        <input type="text" 
+                               id="{{ login_form.username.id_for_label }}"
+                               name="{{ login_form.username.name }}"
+                               value="{% if login_form.username.value %}{{ login_form.username.value }}{% endif %}"
+                               class="form-input"
+                               placeholder="Enter your username"
+                               required
+                               autocomplete="username">
+                        {% if login_form.username.errors %}
+                            <div class="form-error" role="alert">
+                                {% for error in login_form.username.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ login_form.password.id_for_label }}" class="form-label">
+                            Password
+                        </label>
+                        <input type="password" 
+                               id="{{ login_form.password.id_for_label }}"
+                               name="{{ login_form.password.name }}"
+                               class="form-input"
+                               placeholder="Enter your password"
+                               required
+                               autocomplete="current-password">
+                        {% if login_form.password.errors %}
+                            <div class="form-error" role="alert">
+                                {% for error in login_form.password.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                        
+                        {% if login_form.non_field_errors %}
+                            <div class="form-error" role="alert">
+                                {% for error in login_form.non_field_errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <button type="submit" class="btn">
+                        Sign In
+                    </button>
+                </form>
+
+                <div class="form-switch">
+                    <p class="form-switch-text">Don't have an account?</p>
+                    <button type="button" class="btn-link" onclick="toggleForms()">
+                        Create account
+                    </button>
+                </div>
+            </div>
+
+            <!-- Registration Form -->
+            <div id="registerForm" class="{% if not show_register %}hidden{% endif %}">
+                <h1 class="form-title">Create account</h1>
+                <p class="form-subtitle">Join the OJT Tracker system</p>
+                
+                <form method="post" action="{% url 'authentication:login' %}" novalidate>
+                    {% csrf_token %}
+                    <input type="hidden" name="register_submit" value="1">
+                            
+                    <div class="form-group">
+                        <label for="{{ registration_form.first_name.id_for_label }}" class="form-label">
+                            First Name
+                        </label>
+                        <input type="text" 
+                               id="{{ registration_form.first_name.id_for_label }}"
+                               name="{{ registration_form.first_name.name }}"
+                               value="{% if registration_form.first_name.value %}{{ registration_form.first_name.value }}{% endif %}"
+                               class="form-input"
+                               placeholder="Enter your first name"
+                               required
+                               autocomplete="given-name">
+                        {% if registration_form.first_name.errors %}
+                            <div class="form-error" role="alert">
+                                {% for error in registration_form.first_name.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ registration_form.last_name.id_for_label }}" class="form-label">
+                            Last Name
+                        </label>
+                        <input type="text" 
+                               id="{{ registration_form.last_name.id_for_label }}"
+                               name="{{ registration_form.last_name.name }}"
+                               value="{% if registration_form.last_name.value %}{{ registration_form.last_name.value }}{% endif %}"
+                               class="form-input"
+                               placeholder="Enter your last name"
+                               required
+                               autocomplete="family-name">
+                        {% if registration_form.last_name.errors %}
+                            <div class="form-error" role="alert">
+                                {% for error in registration_form.last_name.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ registration_form.username.id_for_label }}" class="form-label">
+                            Username
+                        </label>
+                        <input type="text" 
+                               id="{{ registration_form.username.id_for_label }}"
+                               name="{{ registration_form.username.name }}"
+                               value="{% if registration_form.username.value %}{{ registration_form.username.value }}{% endif %}"
+                               class="form-input"
+                               placeholder="Choose a username"
+                               required
+                               autocomplete="username">
+                        {% if registration_form.username.errors %}
+                            <div class="form-error" role="alert">
+                                {% for error in registration_form.username.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ registration_form.email.id_for_label }}" class="form-label">
+                            Email Address
+                        </label>
+                        <input type="email" 
+                               id="{{ registration_form.email.id_for_label }}"
+                               name="{{ registration_form.email.name }}"
+                               value="{% if registration_form.email.value %}{{ registration_form.email.value }}{% endif %}"
+                               class="form-input"
+                               placeholder="Enter your email"
+                               required
+                               autocomplete="email">
+                        {% if registration_form.email.errors %}
+                            <div class="form-error" role="alert">
+                                {% for error in registration_form.email.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_role" class="form-label">Account Type</label>
+                        <select id="id_role" name="role" class="form-input" required>
+                            <option value="" disabled {% if not registration_form.role.value %}selected{% endif %}>Select account type</option>
+                            {% for value, label in registration_form.fields.role.choices %}
+                                <option value="{{ value }}" {% if registration_form.role.value == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if registration_form.role.errors %}
+                            <div class="form-error" role="alert">
+                                {% for error in registration_form.role.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ registration_form.password1.id_for_label }}" class="form-label">
+                            Password
+                        </label>
+                        <input type="password" 
+                               id="{{ registration_form.password1.id_for_label }}"
+                               name="{{ registration_form.password1.name }}"
+                               class="form-input"
+                               placeholder="Create a password"
+                               required
+                               autocomplete="new-password">
+                        {% if registration_form.password1.errors %}
+                            <div class="form-error" role="alert">
+                                {% for error in registration_form.password1.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ registration_form.password2.id_for_label }}" class="form-label">
+                            Confirm Password
+                        </label>
+                        <input type="password" 
+                               id="{{ registration_form.password2.id_for_label }}"
+                               name="{{ registration_form.password2.name }}"
+                               class="form-input"
+                               placeholder="Confirm your password"
+                               required
+                               autocomplete="new-password">
+                        {% if registration_form.password2.errors %}
+                            <div class="form-error" role="alert">
+                                {% for error in registration_form.password2.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <button type="submit" class="btn">
+                        Create Account
+                    </button>
+                </form>
+
+                <div class="form-switch">
+                    <p class="form-switch-text">Already have an account?</p>
+                    <button type="button" class="btn-link" onclick="toggleForms()">
+                        Sign in
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Feather icons
+        feather.replace();
+
+        // Toggle between login and registration forms
+        function toggleForms() {
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            
+            if (loginForm.classList.contains('hidden')) {
+                loginForm.classList.remove('hidden');
+                registerForm.classList.add('hidden');
+                document.title = 'Sign In - OJT Tracker';
+            } else {
+                loginForm.classList.add('hidden');
+                registerForm.classList.remove('hidden');
+                document.title = 'Sign Up - OJT Tracker';
+            }
+        }
+
+        // Auto-dismiss alerts after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                alert.style.opacity = '0';
+                alert.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => alert.remove(), 300);
+            });
+        }, 5000);
+
+        // Enhanced accessibility: Focus management
+        document.addEventListener('DOMContentLoaded', function() {
+            // Focus first input when form is shown
+            const firstInput = document.querySelector('#loginForm input:not([type="hidden"]), #registerForm input:not([type="hidden"])');
+            if (firstInput && !firstInput.closest('.hidden')) {
+                firstInput.focus();
+            }
+        });
+
+        // Form validation feedback
+        document.querySelectorAll('.form-input').forEach(input => {
+            input.addEventListener('blur', function() {
+                if (this.hasAttribute('required') && !this.value.trim()) {
+                    this.style.borderColor = 'var(--error)';
+                } else {
+                    this.style.borderColor = 'var(--border)';
+                }
+            });
+
+            input.addEventListener('input', function() {
+                this.style.borderColor = 'var(--border)';
+            });
+        });
+    </script>
+</body>
+</html> 

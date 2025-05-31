@@ -1,0 +1,67 @@
+<div class="px-3 py-2">
+    <ul class="nav flex-column">
+        <li class="nav-item mb-1">
+            <a class="nav-link d-flex align-items-center" href="{% url 'ojt_tracker:student_dashboard' %}">
+                <i data-feather="home" class="me-3"></i>
+                Dashboard
+            </a>
+        </li>
+        <li class="nav-item mb-1">
+            <a class="nav-link d-flex align-items-center" href="{% url 'ojt_tracker:student_profile' %}">
+                <i data-feather="user" class="me-3"></i>
+                My Profile
+            </a>
+        </li>
+        <li class="nav-item mb-1">
+            <a class="nav-link d-flex align-items-center" href="{% url 'ojt_tracker:student_placement' %}">
+                <i data-feather="map-pin" class="me-3"></i>
+                Placement
+            </a>
+        </li>
+        
+        <!-- OJT Activities Section -->
+        <li class="nav-item mt-4 mb-2">
+            <div class="nav-link text-muted small fw-semibold text-uppercase">
+                OJT Activities
+            </div>
+        </li>
+        <li class="nav-item mb-1">
+            <a class="nav-link d-flex align-items-center" href="{% url 'ojt_tracker:activity_log' %}">
+                <i data-feather="clipboard" class="me-3"></i>
+                Activities
+            </a>
+        </li>
+        <li class="nav-item mb-1">
+            <a class="nav-link d-flex align-items-center" href="{% url 'ojt_tracker:student_attendance' %}">
+                <i data-feather="calendar" class="me-3"></i>
+                Attendance
+            </a>
+        </li>
+        
+        <!-- Communication Section -->
+        <li class="nav-item mt-4 mb-2">
+            <div class="nav-link text-muted small fw-semibold text-uppercase">
+                Communication
+            </div>
+        </li>
+        <li class="nav-item mb-1">
+            <a class="nav-link d-flex align-items-center" href="{% url 'ojt_tracker:messages' %}">
+                <i data-feather="mail" class="me-3"></i>
+                Messages
+            </a>
+        </li>
+        
+        <!-- Reports Section -->
+        <li class="nav-item mt-4 mb-2">
+            <div class="nav-link text-muted small fw-semibold text-uppercase">
+                Reports
+            </div>
+        </li>
+        <li class="nav-item mb-1">
+            <a class="nav-link d-flex align-items-center" href="{% url 'ojt_tracker:reports' %}">
+                <i data-feather="bar-chart-2" class="me-3"></i>
+                Reports
+            </a>
+        </li>
+    </ul>
+</div> 
