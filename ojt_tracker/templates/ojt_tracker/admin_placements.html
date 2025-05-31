@@ -1,8 +1,123 @@
 {% extends 'ojt_tracker/base.html' %}
+{% load static %}
+
 {% block title %}Admin - Placements{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
-    <h2>Manage Placements</h2>
-    <!-- Add your admin placements content here -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-briefcase me-2"></i>Manage Placements</h2>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPlacementModal">
+                    <i class="fas fa-plus me-2"></i>Add New Placement
+                </button>
+            </div>
+
+            <!-- Placements List -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">OJT Placements</h5>
+                </div>
+                <div class="card-body">
+                    {% if placements %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Student</th>
+                                        <th>Company</th>
+                                        <th>Position</th>
+                                        <th>Supervisor</th>
+                                        <th>Status</th>
+                                        <th>Start Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for placement in placements %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ placement.student.user.get_full_name }}</strong><br>
+                                            <small class="text-muted">{{ placement.student.student_id }}</small>
+                                        </td>
+                                        <td>{{ placement.company.name }}</td>
+                                        <td>{{ placement.position }}</td>
+                                        <td>
+                                            {% if placement.supervisor %}
+                                                {{ placement.supervisor.user.get_full_name }}
+                                            {% else %}
+                                                <span class="text-muted">Not assigned</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if placement.status == 'active' %}
+                                                <span class="badge bg-success">Active</span>
+                                            {% elif placement.status == 'pending' %}
+                                                <span class="badge bg-warning">Pending</span>
+                                            {% elif placement.status == 'completed' %}
+                                                <span class="badge bg-info">Completed</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ placement.status|title }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if placement.start_date %}
+                                                {{ placement.start_date|date:"M d, Y" }}
+                                            {% else %}
+                                                <span class="text-muted">Not set</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <button type="button" class="btn btn-sm btn-outline-primary" title="Edit Placement" aria-label="Edit Placement">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-info" title="View Details" aria-label="View Placement Details">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-success" title="Approve Placement" aria-label="Approve Placement">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-briefcase fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No placements found. Placements will appear here once students are assigned to companies.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Placement Modal -->
+<div class="modal fade" id="addPlacementModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="post">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Placement</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted">Create a new OJT placement assignment.</p>
+                    <!-- Form fields would be rendered here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Placement</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 {% endblock %} 

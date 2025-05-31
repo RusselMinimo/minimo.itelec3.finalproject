@@ -194,10 +194,24 @@ class Attendance(models.Model):
         ('late', 'Late'),
         ('half_day', 'Half Day'),
         ('excused', 'Excused'),
-    ])
+        ('checked_in', 'Checked In'),
+        ('checked_out', 'Checked Out'),
+    ], default='present')
     time_in = models.TimeField(blank=True, null=True)
     time_out = models.TimeField(blank=True, null=True)
     hours_present = models.DecimalField(max_digits=4, decimal_places=2, default=0)
+    
+    # New fields for enhanced tracking
+    check_in_location = models.CharField(max_length=255, blank=True, null=True, help_text="Location/address when checking in")
+    check_out_location = models.CharField(max_length=255, blank=True, null=True, help_text="Location/address when checking out")
+    check_in_ip = models.GenericIPAddressField(blank=True, null=True, help_text="IP address used for check-in")
+    check_out_ip = models.GenericIPAddressField(blank=True, null=True, help_text="IP address used for check-out")
+    is_late = models.BooleanField(default=False, help_text="Marked as late if check-in is after expected time")
+    expected_check_in = models.TimeField(default='08:00:00', help_text="Expected check-in time")
+    break_time_out = models.TimeField(blank=True, null=True, help_text="Break start time")
+    break_time_in = models.TimeField(blank=True, null=True, help_text="Break end time")
+    total_break_minutes = models.IntegerField(default=0, help_text="Total break time in minutes")
+    
     remarks = models.TextField(blank=True)
     verified_by = models.ForeignKey(
         Faculty,
@@ -215,6 +229,54 @@ class Attendance(models.Model):
     
     def __str__(self):
         return f"{self.placement.student.student_id} - {self.date} - {self.get_status_display()}"
+    
+    @property
+    def can_check_in(self):
+        """Check if student can check in today"""
+        today = timezone.now().date()
+        return self.date == today and not self.time_in
+    
+    @property
+    def can_check_out(self):
+        """Check if student can check out today"""
+        today = timezone.now().date()
+        return self.date == today and self.time_in and not self.time_out
+    
+    @property
+    def is_checked_in(self):
+        """Check if student is currently checked in"""
+        today = timezone.now().date()
+        return self.date == today and self.time_in and not self.time_out
+    
+    def calculate_hours_worked(self):
+        """Calculate total hours worked including break deductions"""
+        if self.time_in and self.time_out:
+            start = datetime.combine(date.today(), self.time_in)
+            end = datetime.combine(date.today(), self.time_out)
+            if end < start:  # Next day
+                end = datetime.combine(date.today() + timezone.timedelta(days=1), self.time_out)
+            duration = end - start
+            total_minutes = duration.total_seconds() / 60
+            # Subtract break time
+            work_minutes = total_minutes - self.total_break_minutes
+            return max(0, work_minutes / 60)  # Ensure non-negative hours
+        return 0
+    
+    def save(self, *args, **kwargs):
+        # Auto-calculate hours worked
+        self.hours_present = self.calculate_hours_worked()
+        
+        # Check if late
+        if self.time_in and self.expected_check_in:
+            self.is_late = self.time_in > self.expected_check_in
+        
+        # Update status based on time_in/time_out
+        if self.time_in and self.time_out:
+            self.status = 'checked_out'
+        elif self.time_in:
+            self.status = 'checked_in'
+        
+        super().save(*args, **kwargs)
 
 class Evaluation(models.Model):
     """Model for performance evaluations"""
@@ -336,4 +398,77 @@ class Report(models.Model):
         ordering = ['-created_at']
     
     def __str__(self):
-        return f"{self.get_report_type_display()} - {self.placement.student.student_id} - {self.report_period_start}" 
+        return f"{self.get_report_type_display()} - {self.placement.student.student_id}"
+
+class OJTRequest(models.Model):
+    """Model for student OJT requests"""
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+    
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='ojt_requests')
+    date_submitted = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    remarks = models.TextField(blank=True, help_text="Optional remarks or additional information about the OJT request")
+    admin_response = models.TextField(blank=True, help_text="Admin response or feedback for the request")
+    reviewed_by = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='reviewed_ojt_requests',
+        limit_choices_to={'role__role': 'admin'}
+    )
+    reviewed_at = models.DateTimeField(blank=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-date_submitted']
+    
+    def __str__(self):
+        return f"OJT Request - {self.student.student_id} ({self.get_status_display()})"
+    
+    @property
+    def can_be_approved(self):
+        """Check if this request can be approved"""
+        return self.status == 'pending'
+    
+    @property 
+    def can_be_rejected(self):
+        """Check if this request can be rejected"""
+        return self.status == 'pending'
+    
+    def approve(self, admin_user, response=""):
+        """Approve the OJT request and mark student as ready for OJT"""
+        if self.can_be_approved:
+            # Auto-reject any other pending requests for this student
+            OJTRequest.objects.filter(
+                student=self.student, 
+                status='pending'
+            ).exclude(id=self.id).update(
+                status='rejected',
+                admin_response='Auto-rejected due to approval of another request',
+                reviewed_by=admin_user,
+                reviewed_at=timezone.now()
+            )
+            
+            self.status = 'approved'
+            self.reviewed_by = admin_user
+            self.reviewed_at = timezone.now()
+            self.admin_response = response
+            self.save()
+            return True
+        return False
+    
+    def reject(self, admin_user, response=""):
+        """Reject the OJT request"""
+        if self.can_be_rejected:
+            self.status = 'rejected'
+            self.reviewed_by = admin_user
+            self.reviewed_at = timezone.now()
+            self.admin_response = response
+            self.save()
+            return True
+        return False 

@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from .models import (
     UserRole, Company, OJTProgram, Student, Faculty,
     OJTPlacement, ActivityLog, Attendance, Evaluation,
-    Message, Report
+    Message, Report, OJTRequest
 )
 
 class UserSerializer(serializers.ModelSerializer):
@@ -78,11 +78,15 @@ class AttendanceSerializer(serializers.ModelSerializer):
     student_name = serializers.CharField(source='placement.student.user.get_full_name', read_only=True)
     student_id = serializers.CharField(source='placement.student.student_id', read_only=True)
     verified_by_name = serializers.CharField(source='verified_by.user.get_full_name', read_only=True)
+    can_check_in = serializers.BooleanField(read_only=True)
+    can_check_out = serializers.BooleanField(read_only=True)
+    is_checked_in = serializers.BooleanField(read_only=True)
+    company_name = serializers.CharField(source='placement.company.name', read_only=True)
     
     class Meta:
         model = Attendance
         fields = '__all__'
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'hours_present', 'is_late']
 
 class EvaluationSerializer(serializers.ModelSerializer):
     student_name = serializers.CharField(source='placement.student.user.get_full_name', read_only=True)
@@ -127,11 +131,28 @@ class DashboardStudentSerializer(serializers.ModelSerializer):
                  'current_placement', 'completion_percentage', 'total_hours_completed']
 
 class DashboardFacultySerializer(serializers.ModelSerializer):
-    supervised_placements = OJTPlacementSerializer(many=True, read_only=True)
-    total_supervised_students = serializers.ReadOnlyField()
-    pending_evaluations_count = serializers.ReadOnlyField()
+    """Serializer for faculty dashboard data"""
+    student_count = serializers.IntegerField(read_only=True)
+    pending_evaluations = serializers.IntegerField(read_only=True)
+    pending_activities = serializers.IntegerField(read_only=True)
     
     class Meta:
         model = Faculty
-        fields = ['id', 'employee_id', 'user', 'department', 'position', 
-                 'supervised_placements', 'total_supervised_students', 'pending_evaluations_count'] 
+        fields = ['id', 'employee_id', 'user', 'department', 'position',
+                 'student_count', 'pending_evaluations', 'pending_activities']
+
+class OJTRequestSerializer(serializers.ModelSerializer):
+    """Serializer for OJT requests"""
+    student_name = serializers.CharField(source='student.user.get_full_name', read_only=True)
+    student_id = serializers.CharField(source='student.student_id', read_only=True)
+    student_program = serializers.CharField(source='student.program.name', read_only=True)
+    reviewed_by_name = serializers.CharField(source='reviewed_by.get_full_name', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    
+    class Meta:
+        model = OJTRequest
+        fields = ['id', 'student', 'student_name', 'student_id', 'student_program',
+                 'date_submitted', 'status', 'status_display', 'remarks', 
+                 'admin_response', 'reviewed_by', 'reviewed_by_name', 
+                 'reviewed_at', 'updated_at', 'can_be_approved', 'can_be_rejected']
+        read_only_fields = ['id', 'date_submitted', 'reviewed_by', 'reviewed_at', 'updated_at'] 

@@ -1,0 +1,294 @@
+{% extends 'ojt_tracker/base.html' %}
+{% load static %}
+
+{% block title %}OJT Request - Student{% endblock %}
+
+{% block extra_css %}
+<style>
+    .status-badge {
+        font-size: 0.875rem;
+        padding: 0.375rem 0.75rem;
+        border-radius: 0.375rem;
+        font-weight: 500;
+    }
+    .status-pending {
+        background-color: #fef3c7;
+        color: #d97706;
+    }
+    .status-approved {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+    .status-rejected {
+        background-color: #fee2e2;
+        color: #dc2626;
+    }
+    .request-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        background: white;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    .timeline-item {
+        border-left: 2px solid #e5e7eb;
+        padding-left: 1rem;
+        margin-bottom: 1rem;
+        position: relative;
+    }
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -5px;
+        top: 0;
+        width: 8px;
+        height: 8px;
+        background: #6b7280;
+        border-radius: 50%;
+    }
+    .timeline-item.active::before {
+        background: #10b981;
+    }
+    .timeline-item.rejected::before {
+        background: #ef4444;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-file-alt me-2"></i>
+                        OJT Request
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if current_request %}
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-info-circle me-2"></i>Current Request Status</h6>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="status-badge status-{{ current_request.status }}">
+                                        {{ current_request.get_status_display }}
+                                    </span>
+                                    <small class="text-muted ms-2">
+                                        Submitted on {{ current_request.date_submitted|date:"M d, Y" }}
+                                    </small>
+                                </div>
+                                {% if current_request.status == 'approved' %}
+                                    <div class="text-success">
+                                        <i class="fas fa-check-circle"></i>
+                                        Ready for OJT Placement
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            {% if current_request.admin_response %}
+                                <div class="mt-2">
+                                    <strong>Admin Response:</strong>
+                                    <p class="mb-0 text-muted">{{ current_request.admin_response }}</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+
+                    {% if current_request.status == 'approved' %}
+                        <div class="alert alert-success">
+                            <h6><i class="fas fa-graduation-cap me-2"></i>Congratulations!</h6>
+                            <p class="mb-0">Your OJT request has been approved. You are now ready to proceed with OJT placement. Please contact your coordinator for the next steps.</p>
+                        </div>
+                    {% elif current_request.status == 'pending' %}
+                        <div class="alert alert-warning">
+                            <h6><i class="fas fa-clock me-2"></i>Request Pending</h6>
+                            <p class="mb-0">Your OJT request is currently being reviewed by the administration. You will be notified once a decision is made.</p>
+                        </div>
+                    {% else %}
+                        <!-- Show form for new request -->
+                        <h5 class="mb-3">Submit OJT Request</h5>
+                        <p class="text-muted mb-4">
+                            Ready to start your On-the-Job Training? Submit your request below and wait for admin approval.
+                        </p>
+
+                        <form method="post" id="ojtRequestForm">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="{{ form.remarks.id_for_label }}" class="form-label">
+                                    Additional Remarks (Optional)
+                                </label>
+                                {{ form.remarks }}
+                                {% if form.remarks.help_text %}
+                                    <div class="form-text">{{ form.remarks.help_text }}</div>
+                                {% endif %}
+                                {% if form.remarks.errors %}
+                                    <div class="text-danger">
+                                        {{ form.remarks.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            {% if form.non_field_errors %}
+                                <div class="alert alert-danger">
+                                    {{ form.non_field_errors }}
+                                </div>
+                            {% endif %}
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-paper-plane me-2"></i>
+                                    Submit OJT Request
+                                </button>
+                            </div>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <!-- Student Info Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-user me-2"></i>
+                        Student Information
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        {% if student.profile_picture %}
+                            <img src="{{ student.profile_picture.url }}" 
+                                 alt="Profile" 
+                                 class="rounded-circle me-3" 
+                                 style="width: 60px; height: 60px; object-fit: cover;">
+                        {% else %}
+                            <div class="bg-secondary rounded-circle me-3 d-flex align-items-center justify-content-center" 
+                                 style="width: 60px; height: 60px;">
+                                <i class="fas fa-user text-white fa-lg"></i>
+                            </div>
+                        {% endif %}
+                        <div>
+                            <h6 class="mb-0">{{ student.user.get_full_name }}</h6>
+                            <small class="text-muted">{{ student.student_id }}</small>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <small class="text-muted">Program:</small>
+                            <div>{{ student.program.name }}</div>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Year Level:</small>
+                            <div>{{ student.year_level }}</div>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Section:</small>
+                            <div>{{ student.section }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Guidelines Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Request Guidelines
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            <small>Ensure your profile is complete</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            <small>Review program requirements</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            <small>Request will be reviewed within 3-5 business days</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            <small>You can only have one active request</small>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Request History -->
+    {% if request_history %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history me-2"></i>
+                        Request History
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        {% for req in request_history %}
+                        <div class="timeline-item {% if req.status == 'approved' %}active{% elif req.status == 'rejected' %}rejected{% endif %}">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">
+                                        Request #{{ req.id }}
+                                        <span class="status-badge status-{{ req.status }} ms-2">
+                                            {{ req.get_status_display }}
+                                        </span>
+                                    </h6>
+                                    <p class="text-muted mb-1">
+                                        Submitted: {{ req.date_submitted|date:"M d, Y g:i A" }}
+                                    </p>
+                                    {% if req.reviewed_at %}
+                                        <p class="text-muted mb-1">
+                                            Reviewed: {{ req.reviewed_at|date:"M d, Y g:i A" }}
+                                            {% if req.reviewed_by %}
+                                                by {{ req.reviewed_by.get_full_name }}
+                                            {% endif %}
+                                        </p>
+                                    {% endif %}
+                                    {% if req.remarks %}
+                                        <p class="mb-1"><strong>Remarks:</strong> {{ req.remarks }}</p>
+                                    {% endif %}
+                                    {% if req.admin_response %}
+                                        <p class="mb-1"><strong>Admin Response:</strong> {{ req.admin_response }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    const form = document.getElementById('ojtRequestForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const submitBtn = form.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Submitting...';
+        });
+    }
+});
+</script>
+{% endblock %} 

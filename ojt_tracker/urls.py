@@ -14,6 +14,7 @@ router.register(r'attendance', views.AttendanceViewSet)
 router.register(r'evaluations', views.EvaluationViewSet)
 router.register(r'messages', views.MessageViewSet)
 router.register(r'reports', views.ReportViewSet)
+router.register(r'ojt-requests', views.OJTRequestViewSet)
 
 app_name = 'ojt_tracker'
 
@@ -30,6 +31,7 @@ urlpatterns = [
     path('student/placement/', views.student_placement_view, name='student_placement'),
     path('student/activity-log/', views.activity_log_view, name='activity_log'),
     path('student/attendance/', views.student_attendance_view, name='student_attendance'),
+    path('student/ojt-request/', views.student_ojt_request_view, name='student_ojt_request'),
     
     # Faculty views
     path('faculty/students/', views.faculty_students_view, name='faculty_students'),
@@ -41,6 +43,8 @@ urlpatterns = [
     path('admin/companies/', views.admin_companies_view, name='admin_companies'),
     path('admin/programs/', views.admin_programs_view, name='admin_programs'),
     path('admin/placements/', views.admin_placements_view, name='admin_placements'),
+    path('admin/ojt-requests/', views.admin_ojt_requests_view, name='admin_ojt_requests'),
+    path('admin/ojt-requests/<int:request_id>/', views.admin_ojt_request_detail_view, name='admin_ojt_request_detail'),
     
     # Common views
     path('messages/', views.messages_view, name='messages'),

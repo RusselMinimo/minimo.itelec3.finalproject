@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.models import User
 from .models import (
     UserRole, Student, Faculty, Company, OJTProgram, 
-    OJTPlacement, Attendance, Report, Evaluation, Message
+    OJTPlacement, Attendance, Report, Evaluation, Message, OJTRequest
 )
 
 # Register UserRole model
@@ -81,11 +81,35 @@ class OJTPlacementAdmin(admin.ModelAdmin):
 # Register Attendance model
 @admin.register(Attendance)
 class AttendanceAdmin(admin.ModelAdmin):
-    list_display = ('get_student_name', 'date', 'time_in', 'time_out', 'status', 'hours_present')
-    list_filter = ('status', 'date')
-    search_fields = ('placement__student__user__username', 'placement__student__student_id')
-    readonly_fields = ('created_at', 'updated_at')
+    list_display = ('get_student_name', 'date', 'time_in', 'time_out', 'status', 'hours_present', 'is_late', 'verified_by')
+    list_filter = ('status', 'date', 'is_late', 'verified_by')
+    search_fields = ('placement__student__user__username', 'placement__student__student_id', 'check_in_location', 'check_out_location')
+    readonly_fields = ('created_at', 'updated_at', 'hours_present', 'is_late')
     date_hierarchy = 'date'
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('placement', 'date', 'status')
+        }),
+        ('Time Tracking', {
+            'fields': ('time_in', 'time_out', 'expected_check_in', 'hours_present', 'is_late')
+        }),
+        ('Break Time', {
+            'fields': ('break_time_out', 'break_time_in', 'total_break_minutes'),
+            'classes': ('collapse',)
+        }),
+        ('Location & Security', {
+            'fields': ('check_in_location', 'check_out_location', 'check_in_ip', 'check_out_ip'),
+            'classes': ('collapse',)
+        }),
+        ('Verification', {
+            'fields': ('verified_by', 'remarks')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        })
+    )
     
     def get_student_name(self, obj):
         return obj.placement.student.user.username
@@ -94,15 +118,11 @@ class AttendanceAdmin(admin.ModelAdmin):
 # Register Report model
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
-    list_display = ('get_student_name', 'report_type', 'report_period_start', 'report_period_end', 'is_sent')
-    list_filter = ('report_type', 'is_sent', 'report_period_start')
-    search_fields = ('placement__student__user__username', 'report_type')
-    readonly_fields = ('created_at', 'updated_at')
-    date_hierarchy = 'report_period_start'
-    
-    def get_student_name(self, obj):
-        return obj.placement.student.user.username
-    get_student_name.short_description = 'Student'
+    list_display = ['placement', 'report_type', 'generated_by', 'report_period_start', 'report_period_end', 'is_sent', 'created_at']
+    list_filter = ['report_type', 'is_sent', 'created_at']
+    search_fields = ['placement__student__student_id', 'placement__company__name']
+    readonly_fields = ['created_at', 'updated_at']
+    date_hierarchy = 'created_at'
 
 # Register Evaluation model
 @admin.register(Evaluation)
@@ -125,6 +145,66 @@ class MessageAdmin(admin.ModelAdmin):
     search_fields = ('sender__username', 'recipient__username', 'subject', 'content')
     readonly_fields = ('created_at',)
     date_hierarchy = 'created_at'
+
+# Register OJTRequest model
+@admin.register(OJTRequest)
+class OJTRequestAdmin(admin.ModelAdmin):
+    list_display = ['student', 'student_program', 'status', 'date_submitted', 'reviewed_by', 'reviewed_at']
+    list_filter = ['status', 'date_submitted', 'student__program']
+    search_fields = ['student__student_id', 'student__user__first_name', 'student__user__last_name', 'remarks']
+    readonly_fields = ['date_submitted', 'updated_at']
+    date_hierarchy = 'date_submitted'
+    
+    fieldsets = (
+        ('Request Information', {
+            'fields': ('student', 'status', 'date_submitted', 'remarks')
+        }),
+        ('Admin Review', {
+            'fields': ('reviewed_by', 'reviewed_at', 'admin_response'),
+            'classes': ('collapse',)
+        }),
+        ('Timestamps', {
+            'fields': ('updated_at',),
+            'classes': ('collapse',)
+        })
+    )
+    
+    def student_program(self, obj):
+        return obj.student.program.name
+    student_program.short_description = 'Program'
+    student_program.admin_order_field = 'student__program__name'
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related('student__user', 'student__program', 'reviewed_by')
+    
+    actions = ['approve_requests', 'reject_requests']
+    
+    def approve_requests(self, request, queryset):
+        """Admin action to approve selected requests"""
+        count = 0
+        for ojt_request in queryset.filter(status='pending'):
+            if ojt_request.approve(request.user):
+                count += 1
+        
+        if count:
+            self.message_user(request, f'{count} request(s) approved successfully.')
+        else:
+            self.message_user(request, 'No pending requests were selected.')
+    approve_requests.short_description = 'Approve selected pending requests'
+    
+    def reject_requests(self, request, queryset):
+        """Admin action to reject selected requests"""
+        count = 0
+        for ojt_request in queryset.filter(status='pending'):
+            if ojt_request.reject(request.user, "Rejected via admin action"):
+                count += 1
+        
+        if count:
+            self.message_user(request, f'{count} request(s) rejected.')
+        else:
+            self.message_user(request, 'No pending requests were selected.')
+    reject_requests.short_description = 'Reject selected pending requests'
 
 # Customize admin site header and title
 admin.site.site_header = "OJT Tracker Administration"

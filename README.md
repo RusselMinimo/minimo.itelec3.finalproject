@@ -1,63 +1,83 @@
-# On-the-Job Trainee Tracker
+# OJT Tracker System
 
-A comprehensive Django-based web application designed to help educational institutions efficiently monitor and evaluate their students' internship (OJT) progress.
+A comprehensive Django-based web application for managing On-the-Job Training (OJT) programs, student placements, and tracking progress.
 
-## Project Overview
+## Project Structure
 
-This system provides real-time tracking of trainee activities, attendance, and performance with automated report generation and communication features between students and faculty.
+```
+minimo.itelec3.finalproject/
+├── auth_project/              # Main Django project configuration
+│   ├── settings.py           # Project settings
+│   ├── urls.py              # Main URL configuration
+│   ├── wsgi.py              # WSGI configuration
+│   └── asgi.py              # ASGI configuration
+├── authentication/           # Authentication app
+│   ├── models.py            # User profile models
+│   ├── views.py             # Authentication views
+│   ├── forms.py             # Authentication forms
+│   ├── serializers.py       # API serializers
+│   ├── urls.py              # Authentication URLs
+│   └── templates/           # Authentication templates
+├── ojt_tracker/             # Main OJT tracking app
+│   ├── models.py            # Core business models
+│   ├── views.py             # Web and API views
+│   ├── forms.py             # Django forms
+│   ├── serializers.py       # DRF serializers
+│   ├── admin.py             # Django admin configuration
+│   ├── urls.py              # App URLs
+│   └── templates/           # App templates
+├── media/                   # User uploaded files
+├── staticfiles/             # Collected static files
+├── requirements.txt         # Python dependencies
+├── manage.py               # Django management script
+└── db.sqlite3              # SQLite database
+```
 
-## Key Features
+## Features
 
-- **Secure Authentication**: Role-based access control for students and faculty
-- **Dashboard System**: Customized dashboards based on user roles
-- **Activity Logging**: Students can log daily activities and learning outcomes
-- **Attendance Tracking**: Comprehensive attendance monitoring with verification
-- **Performance Evaluation**: Faculty can evaluate students with detailed feedback
-- **Automated Reports**: Weekly and monthly report generation
-- **Messaging System**: Built-in communication between students and faculty
-- **Company Management**: Track OJT companies and placements
+### User Management
+- **Multi-role Authentication**: Students, Faculty, and Administrators
+- **Profile Management**: Comprehensive user profiles with role-specific information
+- **Secure Authentication**: JWT-based API authentication and session-based web authentication
 
-## Technical Stack
+### Student Features
+- **Profile Management**: Personal information, academic details, and profile pictures
+- **OJT Requests**: Submit and track OJT placement requests
+- **Placement Tracking**: View assigned company and supervisor details
+- **Activity Logging**: Daily activity and learning outcome tracking
+- **Attendance Management**: Check-in/check-out with break time tracking
+- **Dashboard**: Personalized dashboard with key metrics and quick actions
 
-- **Backend**: Django 5.0.2 (Python)
-- **Database**: SQLite (development) / PostgreSQL (production ready)
-- **API**: Django REST Framework with JWT authentication
-- **Frontend**: Django Templates with Bootstrap
-- **Authentication**: Django's built-in auth system with custom roles
+### Faculty Features
+- **Student Supervision**: Monitor assigned students' progress
+- **Evaluation System**: Create and manage student evaluations
+- **Report Generation**: Generate various reports (weekly, monthly, evaluation summaries)
+- **Student Communication**: Messaging system for student interaction
+- **Dashboard**: Faculty-specific dashboard with supervision overview
 
-## Models Structure
+### Administrator Features
+- **Company Management**: Add and manage partner companies
+- **Program Management**: Create and manage OJT programs
+- **Placement Management**: Assign students to companies and supervisors
+- **Request Management**: Review and approve/reject OJT requests
+- **System Overview**: Comprehensive dashboard with system-wide statistics
 
-The application includes 9 core models with proper relationships:
+### API Features
+- **RESTful API**: Complete REST API for all major functionalities
+- **JWT Authentication**: Secure API access with token-based authentication
+- **Filtering and Search**: Advanced filtering and search capabilities
+- **Pagination**: Efficient data pagination for large datasets
 
-1. **UserRole** - Manages user role assignments (student/faculty/admin)
-2. **Company** - OJT partner companies information
-3. **OJTProgram** - Academic programs with OJT requirements
-4. **Student** - Student profiles and program enrollment
-5. **Faculty** - Faculty profiles and supervision assignments
-6. **OJTPlacement** - Student-company placement records
-7. **ActivityLog** - Daily activity tracking with approval workflow
-8. **Attendance** - Attendance records with verification
-9. **Evaluation** - Performance evaluations with detailed scoring
-10. **Message** - Internal messaging system
-11. **Report** - Automated report generation and distribution
+## Technology Stack
 
-## API Endpoints
+- **Backend**: Django 5.0.2, Django REST Framework 3.14.0
+- **Database**: SQLite (development), easily configurable for PostgreSQL/MySQL
+- **Authentication**: Django's built-in auth + JWT for API
+- **Frontend**: Bootstrap 5, HTML5, CSS3, JavaScript
+- **File Handling**: Pillow for image processing
+- **API Documentation**: Django REST Framework browsable API
 
-Each model provides comprehensive REST API endpoints:
-
-- **GET** `/api/model/` - List all records
-- **POST** `/api/model/` - Create new record
-- **GET** `/api/model/{id}/` - Retrieve specific record
-- **PUT/PATCH** `/api/model/{id}/` - Update record
-- **DELETE** `/api/model/{id}/` - Delete record
-
-Plus custom actions for:
-- Dashboard data aggregation
-- Report generation
-- Approval workflows
-- Analytics and statistics
-
-## Installation & Setup
+## Installation
 
 1. **Clone the repository**
    ```bash
@@ -68,8 +88,7 @@ Plus custom actions for:
 2. **Create virtual environment**
    ```bash
    python -m venv venv
-   venv\Scripts\activate  # Windows
-   source venv/bin/activate  # Linux/Mac
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
 3. **Install dependencies**
@@ -79,7 +98,6 @@ Plus custom actions for:
 
 4. **Run migrations**
    ```bash
-   python manage.py makemigrations
    python manage.py migrate
    ```
 
@@ -88,114 +106,68 @@ Plus custom actions for:
    python manage.py createsuperuser
    ```
 
-6. **Collect static files**
-   ```bash
-   python manage.py collectstatic
-   ```
-
-7. **Run development server**
+6. **Run development server**
    ```bash
    python manage.py runserver
    ```
 
-## Project Structure
-
-```
-minimo.itelec3.finalproject/
-├── auth_project/           # Django project settings
-│   ├── settings.py
-│   ├── urls.py
-│   └── wsgi.py
-├── authentication/         # User authentication app
-├── ojt_tracker/           # Main OJT tracking app
-│   ├── models.py          # Core data models
-│   ├── views.py           # API views and template views
-│   ├── serializers.py     # REST API serializers
-│   ├── forms.py           # Django forms
-│   ├── urls.py            # URL routing
-│   ├── admin.py           # Admin interface
-│   └── templates/         # HTML templates
-├── static/                # Static files (CSS, JS, images)
-├── media/                 # User uploaded files
-├── requirements.txt       # Python dependencies
-└── README.md             # This file
-```
-
-## Recent Cleanup & Optimizations
-
-The project has been thoroughly cleaned and optimized:
-
-### ✅ Fixed Issues
-- **Added missing dependency**: `django-filter==23.5` for API filtering
-- **Fixed import errors**: Added missing `DashboardFacultySerializer`
-- **Resolved URL conflicts**: Removed unused app references
-- **Added missing settings**: `STATIC_ROOT` for production deployment
-
-### 🗑️ Removed Unused Code
-- **Deleted unused apps**: Removed `frontend` and `api` apps containing unrelated e-commerce models
-- **Cleaned up imports**: Removed unused imports and dependencies
-- **Removed unused files**: Deleted orphaned template files and media files
-- **Streamlined settings**: Removed references to unused applications
-
-### 📦 Current Dependencies
-```
-Django==5.0.2
-djangorestframework==3.14.0
-djangorestframework-simplejwt==5.3.1
-python-dotenv==1.0.1
-django-cors-headers==4.3.1
-Pillow==10.2.0
-django-filter==23.5
-```
-
 ## Usage
 
-### For Students
-1. Login with student credentials
-2. View dashboard with OJT progress overview
-3. Log daily activities and learning outcomes
-4. Check attendance records
-5. View evaluations and feedback
-6. Communicate with supervisors
+### Web Interface
+- Access the application at `http://localhost:8000`
+- Login page: `http://localhost:8000/auth/login/`
+- Admin interface: `http://localhost:8000/admin/`
 
-### For Faculty
-1. Login with faculty credentials
-2. Monitor supervised students' progress
-3. Approve activity logs
-4. Record attendance verification
-5. Create performance evaluations
-6. Generate progress reports
+### API Endpoints
+- API root: `http://localhost:8000/app/api/`
+- Authentication: `http://localhost:8000/auth/api/`
+- API documentation available through Django REST Framework browsable API
 
-### For Administrators
-1. Manage companies and programs
-2. Create OJT placements
-3. Oversee system-wide analytics
-4. Generate institutional reports
+### User Roles
+1. **Students**: Can manage profiles, submit OJT requests, log activities, and track attendance
+2. **Faculty**: Can supervise students, create evaluations, and generate reports
+3. **Administrators**: Can manage the entire system, companies, programs, and placements
+
+## Configuration
+
+### Environment Variables
+Create a `.env` file for production settings:
+```
+SECRET_KEY=your-secret-key
+DEBUG=False
+ALLOWED_HOSTS=your-domain.com
+DATABASE_URL=your-database-url
+```
+
+### Media Files
+- User uploads are stored in the `media/` directory
+- Configure `MEDIA_ROOT` and `MEDIA_URL` in settings for production
+
+### Static Files
+- Static files are collected in `staticfiles/` directory
+- Run `python manage.py collectstatic` before deployment
 
 ## Security Features
 
-- JWT-based authentication
+- CSRF protection enabled
+- Secure password validation
 - Role-based access control
-- CSRF protection
-- SQL injection protection
-- XSS protection
-- File upload validation
+- JWT token authentication for API
+- File upload restrictions
+- XSS protection headers
 
-## Production Deployment
+## Contributing
 
-The application is production-ready with:
-- Static file configuration
-- Security headers
-- Database optimization
-- Error handling
-- Caching configuration
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## License
+
+This project is developed for educational purposes as part of the ITELEC3 final project.
 
 ## Support
 
-For technical issues or questions about the OJT Tracker system, please refer to the Django documentation or contact the development team.
-
----
-
-**Project Status**: ✅ Production Ready
-**Last Updated**: January 2025
-**Django Version**: 5.0.2 
+For support or questions, please contact the development team or create an issue in the repository. 

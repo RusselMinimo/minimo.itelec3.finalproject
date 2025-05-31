@@ -1,8 +1,179 @@
 {% extends 'ojt_tracker/base.html' %}
+{% load static %}
+
 {% block title %}Faculty - Reports{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
-    <h2>Faculty Reports</h2>
-    <!-- Add your faculty reports content here -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-chart-bar me-2"></i>Faculty Reports</h2>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#generateReportModal">
+                    <i class="fas fa-plus me-2"></i>Generate Report
+                </button>
+            </div>
+
+            <!-- Report Statistics -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <i class="fas fa-users fa-2x text-primary mb-2"></i>
+                            <h5 class="card-title">Total Students</h5>
+                            <h3 class="text-primary">{{ total_students|default:0 }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <i class="fas fa-clipboard-check fa-2x text-success mb-2"></i>
+                            <h5 class="card-title">Evaluations</h5>
+                            <h3 class="text-success">{{ total_evaluations|default:0 }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <i class="fas fa-file-alt fa-2x text-info mb-2"></i>
+                            <h5 class="card-title">Reports Generated</h5>
+                            <h3 class="text-info">{{ total_reports|default:0 }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <i class="fas fa-calendar-check fa-2x text-warning mb-2"></i>
+                            <h5 class="card-title">This Month</h5>
+                            <h3 class="text-warning">{{ monthly_reports|default:0 }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports List -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Generated Reports</h5>
+                </div>
+                <div class="card-body">
+                    {% if reports %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Report Type</th>
+                                        <th>Student/Placement</th>
+                                        <th>Period</th>
+                                        <th>Generated Date</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for report in reports %}
+                                    <tr>
+                                        <td>
+                                            <span class="badge bg-secondary">{{ report.report_type|title }}</span>
+                                        </td>
+                                        <td>
+                                            {% if report.placement %}
+                                                <strong>{{ report.placement.student.user.get_full_name }}</strong><br>
+                                                <small class="text-muted">{{ report.placement.company.name }}</small>
+                                            {% else %}
+                                                <span class="text-muted">General Report</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {{ report.period_start|date:"M d" }} - 
+                                            {{ report.period_end|date:"M d, Y" }}
+                                        </td>
+                                        <td>{{ report.created_at|date:"M d, Y H:i" }}</td>
+                                        <td>
+                                            {% if report.is_sent %}
+                                                <span class="badge bg-success">Sent</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">Draft</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <button type="button" class="btn btn-sm btn-outline-primary" title="View Report" aria-label="View Report">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-success" title="Download PDF" aria-label="Download PDF">
+                                                    <i class="fas fa-download"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-info" title="Send Report" aria-label="Send Report">
+                                                    <i class="fas fa-paper-plane"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No reports generated yet. Create your first report to get started.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Generate Report Modal -->
+<div class="modal fade" id="generateReportModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">Generate New Report</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="reportType" class="form-label">Report Type</label>
+                        <select class="form-select" id="reportType" name="report_type" required>
+                            <option value="">Select report type...</option>
+                            <option value="weekly">Weekly Report</option>
+                            <option value="monthly">Monthly Report</option>
+                            <option value="evaluation">Evaluation Summary</option>
+                            <option value="attendance">Attendance Report</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="studentSelect" class="form-label">Student (Optional)</label>
+                        <select class="form-select" id="studentSelect" name="student_id">
+                            <option value="">All students...</option>
+                            <!-- Student options would be populated here -->
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="startDate" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="startDate" name="start_date" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="endDate" class="form-label">End Date</label>
+                            <input type="date" class="form-control" id="endDate" name="end_date" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Generate Report</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 {% endblock %} 

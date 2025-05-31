@@ -1,8 +1,685 @@
 {% extends 'ojt_tracker/base.html' %}
-{% block title %}Faculty - My Students{% endblock %}
+{% load static %}
+
+{% block title %}Faculty - Manage Students{% endblock %}
+
+{% block extra_css %}
+<style>
+    .student-card {
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+    }
+    
+    .student-card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .status-badge {
+        font-size: 0.85rem;
+        padding: 5px 12px;
+        border-radius: 20px;
+    }
+    
+    .status-present { background-color: #d4edda; color: #155724; }
+    .status-absent { background-color: #f8d7da; color: #721c24; }
+    .status-late { background-color: #fff3cd; color: #856404; }
+    .status-checked-in { background-color: #d1ecf1; color: #0c5460; }
+    .status-checked-out { background-color: #d4edda; color: #155724; }
+    
+    .filter-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+    }
+    
+    .loading-spinner {
+        display: none;
+        width: 20px;
+        height: 20px;
+        border: 2px solid #ffffff;
+        border-top: 2px solid transparent;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .attendance-summary {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        border-radius: 15px;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
-    <h2>My Students</h2>
-    <!-- Add your faculty students content here -->
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">
+            <i class="fas fa-users me-2 text-primary"></i>
+            Manage Students
+        </h2>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary btn-sm" onclick="exportAttendanceReport()">
+                <i class="fas fa-download me-1"></i>Export Report
+            </button>
+            <button class="btn btn-primary btn-sm" onclick="refreshData()">
+                <i class="fas fa-sync-alt me-1"></i>Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card student-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-users fa-2x mb-2 text-primary"></i>
+                    <h5>Total Students</h5>
+                    <h3 class="text-primary mb-0" id="total-students">{{ supervised_placements.count }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card student-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-check-circle fa-2x mb-2 text-success"></i>
+                    <h5>Present Today</h5>
+                    <h3 class="text-success mb-0" id="present-today">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card student-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-exclamation-triangle fa-2x mb-2 text-warning"></i>
+                    <h5>Late Today</h5>
+                    <h3 class="text-warning mb-0" id="late-today">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card student-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-times-circle fa-2x mb-2 text-danger"></i>
+                    <h5>Absent Today</h5>
+                    <h3 class="text-danger mb-0" id="absent-today">0</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card filter-card">
+                <div class="card-body">
+                    <form id="filter-form" class="row align-items-end">
+                        <div class="col-md-2">
+                            <label class="form-label">Date From</label>
+                            <input type="date" class="form-control" id="date-from" name="date_from">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Date To</label>
+                            <input type="date" class="form-control" id="date-to" name="date_to">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Student</label>
+                            <select class="form-control" id="student-filter" name="student">
+                                <option value="">All Students</option>
+                                {% for placement in supervised_placements %}
+                                <option value="{{ placement.student.id }}">{{ placement.student.user.get_full_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Status</label>
+                            <select class="form-control" id="status-filter" name="status">
+                                <option value="">All Status</option>
+                                <option value="present">Present</option>
+                                <option value="absent">Absent</option>
+                                <option value="late">Late</option>
+                                <option value="checked_in">Checked In</option>
+                                <option value="checked_out">Checked Out</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Verification</label>
+                            <select class="form-control" id="verified-filter" name="verified">
+                                <option value="">All</option>
+                                <option value="verified">Verified</option>
+                                <option value="pending">Pending</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-light me-2">
+                                <i class="fas fa-filter me-1"></i>Filter
+                            </button>
+                            <button type="button" class="btn btn-outline-light" onclick="resetFilters()">
+                                <i class="fas fa-undo me-1"></i>Reset
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance Records -->
+    <div class="card student-card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="fas fa-clipboard-list me-2"></i>
+                Student Attendance Records
+            </h5>
+            <div class="d-flex gap-2">
+                <button class="btn btn-success btn-sm" onclick="bulkVerify()">
+                    <i class="fas fa-check-double me-1"></i>Bulk Verify
+                </button>
+                <button class="btn btn-primary btn-sm" onclick="addAttendanceRecord()">
+                    <i class="fas fa-plus me-1"></i>Add Record
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="attendance-table">
+                    <thead class="table-light">
+                        <tr>
+                            <th>
+                                <input type="checkbox" id="select-all" onchange="toggleSelectAll()">
+                            </th>
+                            <th>Date</th>
+                            <th>Student</th>
+                            <th>Company</th>
+                            <th>Time In</th>
+                            <th>Time Out</th>
+                            <th>Hours</th>
+                            <th>Status</th>
+                            <th>Location</th>
+                            <th>Break Time</th>
+                            <th>Verified</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendance-tbody">
+                        <!-- Records will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            <nav aria-label="Attendance pagination">
+                <ul class="pagination justify-content-center" id="pagination">
+                    <!-- Pagination will be loaded here -->
+                </ul>
+            </nav>
+        </div>
+    </div>
 </div>
+
+<!-- Add/Edit Attendance Modal -->
+<div class="modal fade" id="attendanceModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus me-2"></i>
+                    <span id="modal-title">Add Attendance Record</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="attendance-form">
+                    <input type="hidden" id="attendance-id" name="id">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Student</label>
+                            <select class="form-control" id="student-select" name="student" required>
+                                <option value="">Select Student</option>
+                                {% for placement in supervised_placements %}
+                                <option value="{{ placement.id }}">{{ placement.student.user.get_full_name }} ({{ placement.student.student_id }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Date</label>
+                            <input type="date" class="form-control" id="attendance-date" name="date" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Time In</label>
+                            <input type="time" class="form-control" id="time-in" name="time_in">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Time Out</label>
+                            <input type="time" class="form-control" id="time-out" name="time_out">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Status</label>
+                            <select class="form-control" id="attendance-status" name="status" required>
+                                <option value="present">Present</option>
+                                <option value="absent">Absent</option>
+                                <option value="late">Late</option>
+                                <option value="half_day">Half Day</option>
+                                <option value="excused">Excused</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Check-in Location</label>
+                            <input type="text" class="form-control" id="check-in-location" name="check_in_location" placeholder="Optional">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Expected Check-in Time</label>
+                            <input type="time" class="form-control" id="expected-check-in" name="expected_check_in" value="08:00">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Remarks</label>
+                        <textarea class="form-control" id="remarks" name="remarks" rows="3" placeholder="Additional notes or comments"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveAttendance()">
+                    <span class="loading-spinner me-2"></span>
+                    Save Record
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Verify Attendance Modal -->
+<div class="modal fade" id="verifyModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-check-circle me-2"></i>
+                    Verify Attendance
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to verify the selected attendance record(s)?</p>
+                <div id="verify-details"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="confirmVerify()">
+                    <span class="loading-spinner me-2"></span>
+                    Verify
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedRecords = [];
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    loadAttendanceRecords();
+    loadTodayStats();
+    initializeFilters();
+    
+    // Set up form submission
+    document.getElementById('filter-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        loadAttendanceRecords();
+    });
+});
+
+function loadTodayStats() {
+    const today = new Date().toISOString().split('T')[0];
+    fetch(`/ojt_tracker/api/attendance/attendance_summary/?date=${today}`, {
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('access_token'),
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.present_today !== undefined) {
+            document.getElementById('present-today').textContent = data.present_today || 0;
+            document.getElementById('late-today').textContent = data.late_today || 0;
+            document.getElementById('absent-today').textContent = data.absent_today || 0;
+        }
+    })
+    .catch(error => {
+        console.error('Error loading today stats:', error);
+    });
+}
+
+function loadAttendanceRecords() {
+    const formData = new FormData(document.getElementById('filter-form'));
+    const params = new URLSearchParams();
+    
+    for (let [key, value] of formData.entries()) {
+        if (value) params.append(key, value);
+    }
+    
+    fetch(`/ojt_tracker/api/attendance/?${params.toString()}`, {
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('access_token'),
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        displayAttendanceRecords(data.results || data);
+    })
+    .catch(error => {
+        console.error('Error loading attendance records:', error);
+        showAlert('Error loading attendance records', 'danger');
+    });
+}
+
+function displayAttendanceRecords(records) {
+    const tbody = document.getElementById('attendance-tbody');
+    tbody.innerHTML = '';
+    
+    if (!records.length) {
+        tbody.innerHTML = '<tr><td colspan="12" class="text-center">No attendance records found</td></tr>';
+        return;
+    }
+    
+    records.forEach(record => {
+        const row = document.createElement('tr');
+        
+        const breakTime = record.total_break_minutes > 0 ? `${Math.floor(record.total_break_minutes / 60)}h ${record.total_break_minutes % 60}m` : '-';
+        const location = record.check_in_location ? record.check_in_location : '-';
+        const verified = record.verified_by_name ? 
+            `<i class="fas fa-check-circle text-success" title="Verified by ${record.verified_by_name}"></i>` : 
+            `<button class="btn btn-sm btn-outline-success" onclick="verifyRecord(${record.id})">
+                <i class="fas fa-check"></i>
+            </button>`;
+        
+        row.innerHTML = `
+            <td>
+                <input type="checkbox" class="record-checkbox" value="${record.id}" onchange="updateSelectedRecords()">
+            </td>
+            <td>${new Date(record.date).toLocaleDateString()}</td>
+            <td>
+                <div class="d-flex align-items-center">
+                    <div>
+                        <div class="fw-bold">${record.student_name}</div>
+                        <small class="text-muted">${record.student_id}</small>
+                    </div>
+                </div>
+            </td>
+            <td>${record.company_name || '-'}</td>
+            <td>${record.time_in || '-'}</td>
+            <td>${record.time_out || '-'}</td>
+            <td>${record.hours_present || '0.0'}</td>
+            <td><span class="status-badge status-${record.status}">${record.status.replace('_', ' ')}</span></td>
+            <td><small>${location}</small></td>
+            <td>${breakTime}</td>
+            <td class="text-center">${verified}</td>
+            <td>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-primary" onclick="editRecord(${record.id})" title="Edit">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-outline-danger" onclick="deleteRecord(${record.id})" title="Delete">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        
+        tbody.appendChild(row);
+    });
+}
+
+function toggleSelectAll() {
+    const selectAll = document.getElementById('select-all');
+    const checkboxes = document.querySelectorAll('.record-checkbox');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAll.checked;
+    });
+    
+    updateSelectedRecords();
+}
+
+function updateSelectedRecords() {
+    const checkboxes = document.querySelectorAll('.record-checkbox:checked');
+    selectedRecords = Array.from(checkboxes).map(cb => cb.value);
+    
+    // Update select all checkbox
+    const selectAll = document.getElementById('select-all');
+    const allCheckboxes = document.querySelectorAll('.record-checkbox');
+    selectAll.checked = allCheckboxes.length > 0 && selectedRecords.length === allCheckboxes.length;
+}
+
+function addAttendanceRecord() {
+    document.getElementById('modal-title').textContent = 'Add Attendance Record';
+    document.getElementById('attendance-form').reset();
+    document.getElementById('attendance-id').value = '';
+    document.getElementById('attendance-date').value = new Date().toISOString().split('T')[0];
+    
+    new bootstrap.Modal(document.getElementById('attendanceModal')).show();
+}
+
+function editRecord(recordId) {
+    // Fetch record details and populate form
+    fetch(`/ojt_tracker/api/attendance/${recordId}/`, {
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('access_token'),
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(record => {
+        document.getElementById('modal-title').textContent = 'Edit Attendance Record';
+        document.getElementById('attendance-id').value = record.id;
+        document.getElementById('student-select').value = record.placement;
+        document.getElementById('attendance-date').value = record.date;
+        document.getElementById('time-in').value = record.time_in || '';
+        document.getElementById('time-out').value = record.time_out || '';
+        document.getElementById('attendance-status').value = record.status;
+        document.getElementById('check-in-location').value = record.check_in_location || '';
+        document.getElementById('expected-check-in').value = record.expected_check_in || '08:00';
+        document.getElementById('remarks').value = record.remarks || '';
+        
+        new bootstrap.Modal(document.getElementById('attendanceModal')).show();
+    })
+    .catch(error => {
+        console.error('Error loading record:', error);
+        showAlert('Error loading record details', 'danger');
+    });
+}
+
+function saveAttendance() {
+    const form = document.getElementById('attendance-form');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    
+    const recordId = document.getElementById('attendance-id').value;
+    const url = recordId ? 
+        `/ojt_tracker/api/attendance/${recordId}/` : 
+        '/ojt_tracker/api/attendance/';
+    const method = recordId ? 'PUT' : 'POST';
+    
+    const saveBtn = document.querySelector('#attendanceModal .btn-primary');
+    setButtonLoading(saveBtn, true);
+    
+    fetch(url, {
+        method: method,
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('access_token'),
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error || data.non_field_errors) {
+            showAlert(data.error || data.non_field_errors[0], 'danger');
+        } else {
+            showAlert('Attendance record saved successfully', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('attendanceModal')).hide();
+            loadAttendanceRecords();
+            loadTodayStats();
+        }
+    })
+    .catch(error => {
+        console.error('Error saving record:', error);
+        showAlert('Error saving attendance record', 'danger');
+    })
+    .finally(() => {
+        setButtonLoading(saveBtn, false);
+    });
+}
+
+function verifyRecord(recordId) {
+    selectedRecords = [recordId];
+    showVerifyModal();
+}
+
+function bulkVerify() {
+    if (selectedRecords.length === 0) {
+        showAlert('Please select at least one record to verify', 'warning');
+        return;
+    }
+    showVerifyModal();
+}
+
+function showVerifyModal() {
+    const details = document.getElementById('verify-details');
+    details.innerHTML = `<p>Records to verify: <strong>${selectedRecords.length}</strong></p>`;
+    
+    new bootstrap.Modal(document.getElementById('verifyModal')).show();
+}
+
+function confirmVerify() {
+    const verifyBtn = document.querySelector('#verifyModal .btn-success');
+    setButtonLoading(verifyBtn, true);
+    
+    Promise.all(selectedRecords.map(recordId => {
+        return fetch(`/ojt_tracker/api/attendance/${recordId}/verify/`, {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('access_token'),
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            }
+        });
+    }))
+    .then(responses => {
+        const allSuccessful = responses.every(response => response.ok);
+        if (allSuccessful) {
+            showAlert('Records verified successfully', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('verifyModal')).hide();
+            loadAttendanceRecords();
+            selectedRecords = [];
+            document.getElementById('select-all').checked = false;
+        } else {
+            showAlert('Some records could not be verified', 'warning');
+        }
+    })
+    .catch(error => {
+        console.error('Error verifying records:', error);
+        showAlert('Error verifying records', 'danger');
+    })
+    .finally(() => {
+        setButtonLoading(verifyBtn, false);
+    });
+}
+
+function deleteRecord(recordId) {
+    if (confirm('Are you sure you want to delete this attendance record?')) {
+        fetch(`/ojt_tracker/api/attendance/${recordId}/`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('access_token'),
+                'X-CSRFToken': getCSRFToken()
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                showAlert('Record deleted successfully', 'success');
+                loadAttendanceRecords();
+                loadTodayStats();
+            } else {
+                showAlert('Error deleting record', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error deleting record:', error);
+            showAlert('Error deleting record', 'danger');
+        });
+    }
+}
+
+function refreshData() {
+    loadAttendanceRecords();
+    loadTodayStats();
+    showAlert('Data refreshed', 'success');
+}
+
+function initializeFilters() {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    
+    document.getElementById('date-from').value = firstDay.toISOString().split('T')[0];
+    document.getElementById('date-to').value = today.toISOString().split('T')[0];
+}
+
+function resetFilters() {
+    document.getElementById('filter-form').reset();
+    initializeFilters();
+    loadAttendanceRecords();
+}
+
+function exportAttendanceReport() {
+    showAlert('Export feature coming soon', 'info');
+}
+
+function setButtonLoading(button, loading) {
+    const spinner = button.querySelector('.loading-spinner');
+    if (loading) {
+        button.disabled = true;
+        if (spinner) spinner.style.display = 'inline-block';
+    } else {
+        button.disabled = false;
+        if (spinner) spinner.style.display = 'none';
+    }
+}
+
+function getCSRFToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+}
+
+function showAlert(message, type = 'info') {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
+    alertDiv.style.zIndex = '9999';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+</script>
 {% endblock %} 

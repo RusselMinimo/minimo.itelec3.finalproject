@@ -1,8 +1,730 @@
 {% extends 'ojt_tracker/base.html' %}
+{% load static %}
+
 {% block title %}Student - Attendance{% endblock %}
+
+{% block extra_css %}
+<style>
+    .attendance-card {
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+    }
+    
+    .attendance-card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .check-btn {
+        border-radius: 50px;
+        padding: 12px 30px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+    }
+    
+    .check-btn:hover {
+        transform: scale(1.05);
+    }
+    
+    .status-badge {
+        font-size: 0.85rem;
+        padding: 5px 12px;
+        border-radius: 20px;
+    }
+    
+    .status-present { background-color: #d4edda; color: #155724; }
+    .status-absent { background-color: #f8d7da; color: #721c24; }
+    .status-late { background-color: #fff3cd; color: #856404; }
+    .status-checked-in { background-color: #d1ecf1; color: #0c5460; }
+    .status-checked-out { background-color: #d4edda; color: #155724; }
+    
+    .time-display {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #007bff;
+    }
+    
+    .filter-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+    }
+    
+    .stats-card {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        border-radius: 15px;
+    }
+    
+    .loading-spinner {
+        display: none;
+        width: 20px;
+        height: 20px;
+        border: 2px solid #ffffff;
+        border-top: 2px solid transparent;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .location-badge {
+        font-size: 0.75rem;
+        background-color: #e9ecef;
+        color: #495057;
+        padding: 2px 8px;
+        border-radius: 10px;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
-    <h2>My Attendance</h2>
-    <!-- Add your student attendance content here -->
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">
+            <i class="fas fa-calendar-check me-2 text-primary"></i>
+            My Attendance
+        </h2>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-primary">{{ current_placement.company.name }}</span>
+            <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#attendanceStatsModal">
+                <i class="fas fa-chart-bar me-1"></i>View Stats
+            </button>
+        </div>
+    </div>
+
+    <!-- Today's Status and Check-in/Check-out -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="card attendance-card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock me-2"></i>
+                        Today's Attendance - <span id="current-date"></span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <div class="text-center mb-3">
+                                <div class="time-display" id="current-time"></div>
+                                <small class="text-muted">Current Time</small>
+                            </div>
+                            
+                            <div id="attendance-status" class="text-center">
+                                <!-- Status will be loaded here -->
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="d-grid gap-2">
+                                <button id="check-in-btn" class="btn btn-success check-btn" onclick="checkIn()">
+                                    <span class="loading-spinner me-2"></span>
+                                    <i class="fas fa-sign-in-alt me-2"></i>Check In
+                                </button>
+                                
+                                <button id="check-out-btn" class="btn btn-danger check-btn" onclick="checkOut()" disabled>
+                                    <span class="loading-spinner me-2"></span>
+                                    <i class="fas fa-sign-out-alt me-2"></i>Check Out
+                                </button>
+                                
+                                <div class="btn-group" role="group">
+                                    <button id="break-start-btn" class="btn btn-warning btn-sm" onclick="startBreak()" disabled>
+                                        <i class="fas fa-pause me-1"></i>Start Break
+                                    </button>
+                                    <button id="break-end-btn" class="btn btn-info btn-sm" onclick="endBreak()" disabled>
+                                        <i class="fas fa-play me-1"></i>End Break
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card stats-card text-white">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="fas fa-chart-line me-2"></i>
+                        Quick Stats
+                    </h6>
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h3 class="mb-0">{{ stats.attendance_rate|floatformat:1 }}%</h3>
+                            <small>Attendance Rate</small>
+                        </div>
+                        <div class="col-6">
+                            <h3 class="mb-0">{{ stats.present_days }}</h3>
+                            <small>Present Days</small>
+                        </div>
+                    </div>
+                    <hr class="my-3">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h4 class="mb-0">{{ stats.late_days }}</h4>
+                            <small>Late Days</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="mb-0">{{ stats.absent_days }}</h4>
+                            <small>Absent Days</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card filter-card">
+                <div class="card-body">
+                    <form id="filter-form" class="row align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label">Date From</label>
+                            <input type="date" class="form-control" id="date-from" name="date_from">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Date To</label>
+                            <input type="date" class="form-control" id="date-to" name="date_to">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Status</label>
+                            <select class="form-control" id="status-filter" name="status">
+                                <option value="">All Status</option>
+                                <option value="present">Present</option>
+                                <option value="absent">Absent</option>
+                                <option value="late">Late</option>
+                                <option value="checked_in">Checked In</option>
+                                <option value="checked_out">Checked Out</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-light me-2">
+                                <i class="fas fa-filter me-1"></i>Filter
+                            </button>
+                            <button type="button" class="btn btn-outline-light" onclick="resetFilters()">
+                                <i class="fas fa-undo me-1"></i>Reset
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance Records -->
+    <div class="card attendance-card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="fas fa-history me-2"></i>
+                Attendance History
+            </h5>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-primary btn-sm" onclick="exportAttendance()">
+                    <i class="fas fa-download me-1"></i>Export
+                </button>
+                <button class="btn btn-primary btn-sm" onclick="refreshAttendance()">
+                    <i class="fas fa-sync-alt me-1"></i>Refresh
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="attendance-table">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Time In</th>
+                            <th>Time Out</th>
+                            <th>Hours</th>
+                            <th>Status</th>
+                            <th>Break Time</th>
+                            <th>Location</th>
+                            <th>Verified</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendance-tbody">
+                        <!-- Records will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            <nav aria-label="Attendance pagination">
+                <ul class="pagination justify-content-center" id="pagination">
+                    <!-- Pagination will be loaded here -->
+                </ul>
+            </nav>
+        </div>
+    </div>
 </div>
+
+<!-- Attendance Stats Modal -->
+<div class="modal fade" id="attendanceStatsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Detailed Attendance Statistics
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <canvas id="attendanceChart" width="400" height="300"></canvas>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Monthly Summary</h6>
+                        <div class="list-group">
+                            <div class="list-group-item d-flex justify-content-between">
+                                <span>Total Days:</span>
+                                <strong>{{ stats.total_days }}</strong>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between">
+                                <span>Present Days:</span>
+                                <strong class="text-success">{{ stats.present_days }}</strong>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between">
+                                <span>Absent Days:</span>
+                                <strong class="text-danger">{{ stats.absent_days }}</strong>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between">
+                                <span>Late Days:</span>
+                                <strong class="text-warning">{{ stats.late_days }}</strong>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between">
+                                <span>Attendance Rate:</span>
+                                <strong class="text-primary">{{ stats.attendance_rate|floatformat:1 }}%</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Location Modal -->
+<div class="modal fade" id="locationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Location (Optional)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Current Location</label>
+                    <input type="text" class="form-control" id="location-input" placeholder="Enter your current location">
+                    <div class="form-text">This helps track where you're working from</div>
+                </div>
+                <div class="mb-3">
+                    <button class="btn btn-outline-primary btn-sm" onclick="getCurrentLocation()">
+                        <i class="fas fa-map-marker-alt me-1"></i>Use Current Location
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Skip</button>
+                <button type="button" class="btn btn-primary" id="confirm-location-btn">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let currentAction = null;
+let attendanceChart = null;
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    updateCurrentTime();
+    setInterval(updateCurrentTime, 1000);
+    loadTodayStatus();
+    loadAttendanceRecords();
+    initializeFilters();
+    
+    // Set up form submission
+    document.getElementById('filter-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        loadAttendanceRecords();
+    });
+});
+
+function updateCurrentTime() {
+    const now = new Date();
+    document.getElementById('current-time').textContent = now.toLocaleTimeString();
+    document.getElementById('current-date').textContent = now.toLocaleDateString();
+}
+
+function loadTodayStatus() {
+    fetch('/ojt_tracker/api/attendance/today_status/', {
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('access_token'),
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            showAlert(data.error, 'danger');
+            return;
+        }
+        
+        updateAttendanceStatus(data);
+    })
+    .catch(error => {
+        console.error('Error loading today status:', error);
+        showAlert('Error loading attendance status', 'danger');
+    });
+}
+
+function updateAttendanceStatus(data) {
+    const statusDiv = document.getElementById('attendance-status');
+    const checkInBtn = document.getElementById('check-in-btn');
+    const checkOutBtn = document.getElementById('check-out-btn');
+    const breakStartBtn = document.getElementById('break-start-btn');
+    const breakEndBtn = document.getElementById('break-end-btn');
+    
+    if (!data.has_placement) {
+        statusDiv.innerHTML = '<div class="alert alert-warning">No active placement found</div>';
+        checkInBtn.disabled = true;
+        checkOutBtn.disabled = true;
+        return;
+    }
+    
+    if (!data.has_attendance) {
+        statusDiv.innerHTML = '<div class="alert alert-info">Ready to check in for today</div>';
+        checkInBtn.disabled = false;
+        checkOutBtn.disabled = true;
+        breakStartBtn.disabled = true;
+        breakEndBtn.disabled = true;
+        return;
+    }
+    
+    const attendance = data.attendance;
+    let statusHtml = '<div class="row text-center">';
+    
+    if (attendance.time_in) {
+        statusHtml += `
+            <div class="col-6">
+                <h6>Check In</h6>
+                <p class="mb-0 fw-bold text-success">${attendance.time_in}</p>
+                ${attendance.is_late ? '<small class="text-warning">Late</small>' : ''}
+            </div>
+        `;
+    }
+    
+    if (attendance.time_out) {
+        statusHtml += `
+            <div class="col-6">
+                <h6>Check Out</h6>
+                <p class="mb-0 fw-bold text-danger">${attendance.time_out}</p>
+                <small class="text-muted">${attendance.hours_present} hours</small>
+            </div>
+        `;
+    }
+    
+    statusHtml += '</div>';
+    
+    statusHtml += `<div class="mt-3 text-center">
+        <span class="status-badge status-${attendance.status}">${attendance.status.replace('_', ' ').toUpperCase()}</span>
+    </div>`;
+    
+    statusDiv.innerHTML = statusHtml;
+    
+    // Update button states
+    checkInBtn.disabled = !!attendance.time_in;
+    checkOutBtn.disabled = !attendance.time_in || !!attendance.time_out;
+    breakStartBtn.disabled = !attendance.time_in || !!attendance.time_out || !!attendance.break_time_out;
+    breakEndBtn.disabled = !attendance.break_time_out || !!attendance.break_time_in;
+}
+
+function checkIn() {
+    currentAction = 'check_in';
+    document.getElementById('locationModal').querySelector('.modal-title').textContent = 'Check In Location';
+    new bootstrap.Modal(document.getElementById('locationModal')).show();
+}
+
+function checkOut() {
+    currentAction = 'check_out';
+    document.getElementById('locationModal').querySelector('.modal-title').textContent = 'Check Out Location';
+    new bootstrap.Modal(document.getElementById('locationModal')).show();
+}
+
+document.getElementById('confirm-location-btn').addEventListener('click', function() {
+    const location = document.getElementById('location-input').value;
+    
+    if (currentAction === 'check_in') {
+        performCheckIn(location);
+    } else if (currentAction === 'check_out') {
+        performCheckOut(location);
+    }
+    
+    bootstrap.Modal.getInstance(document.getElementById('locationModal')).hide();
+});
+
+function performCheckIn(location) {
+    const btn = document.getElementById('check-in-btn');
+    setButtonLoading(btn, true);
+    
+    fetch('/ojt_tracker/api/attendance/check_in/', {
+        method: 'POST',
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('access_token'),
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({ location: location })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            showAlert(data.error, 'danger');
+        } else {
+            showAlert(data.message, 'success');
+            loadTodayStatus();
+            loadAttendanceRecords();
+        }
+    })
+    .catch(error => {
+        console.error('Error checking in:', error);
+        showAlert('Error checking in', 'danger');
+    })
+    .finally(() => {
+        setButtonLoading(btn, false);
+    });
+}
+
+function performCheckOut(location) {
+    const btn = document.getElementById('check-out-btn');
+    setButtonLoading(btn, true);
+    
+    fetch('/ojt_tracker/api/attendance/check_out/', {
+        method: 'POST',
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('access_token'),
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({ location: location })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            showAlert(data.error, 'danger');
+        } else {
+            showAlert(data.message, 'success');
+            loadTodayStatus();
+            loadAttendanceRecords();
+        }
+    })
+    .catch(error => {
+        console.error('Error checking out:', error);
+        showAlert('Error checking out', 'danger');
+    })
+    .finally(() => {
+        setButtonLoading(btn, false);
+    });
+}
+
+function startBreak() {
+    const btn = document.getElementById('break-start-btn');
+    setButtonLoading(btn, true);
+    
+    fetch('/ojt_tracker/api/attendance/start_break/', {
+        method: 'POST',
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('access_token'),
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            showAlert(data.error, 'danger');
+        } else {
+            showAlert(data.message, 'success');
+            loadTodayStatus();
+        }
+    })
+    .catch(error => {
+        console.error('Error starting break:', error);
+        showAlert('Error starting break', 'danger');
+    })
+    .finally(() => {
+        setButtonLoading(btn, false);
+    });
+}
+
+function endBreak() {
+    const btn = document.getElementById('break-end-btn');
+    setButtonLoading(btn, true);
+    
+    fetch('/ojt_tracker/api/attendance/end_break/', {
+        method: 'POST',
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('access_token'),
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            showAlert(data.error, 'danger');
+        } else {
+            showAlert(data.message, 'success');
+            loadTodayStatus();
+        }
+    })
+    .catch(error => {
+        console.error('Error ending break:', error);
+        showAlert('Error ending break', 'danger');
+    })
+    .finally(() => {
+        setButtonLoading(btn, false);
+    });
+}
+
+function loadAttendanceRecords() {
+    const formData = new FormData(document.getElementById('filter-form'));
+    const params = new URLSearchParams();
+    
+    for (let [key, value] of formData.entries()) {
+        if (value) params.append(key, value);
+    }
+    
+    fetch(`/ojt_tracker/api/attendance/?${params.toString()}`, {
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('access_token'),
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        displayAttendanceRecords(data.results || data);
+    })
+    .catch(error => {
+        console.error('Error loading attendance records:', error);
+        showAlert('Error loading attendance records', 'danger');
+    });
+}
+
+function displayAttendanceRecords(records) {
+    const tbody = document.getElementById('attendance-tbody');
+    tbody.innerHTML = '';
+    
+    if (!records.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center">No attendance records found</td></tr>';
+        return;
+    }
+    
+    records.forEach(record => {
+        const row = document.createElement('tr');
+        
+        const breakTime = record.total_break_minutes > 0 ? `${Math.floor(record.total_break_minutes / 60)}h ${record.total_break_minutes % 60}m` : '-';
+        const location = record.check_in_location ? `<span class="location-badge">${record.check_in_location}</span>` : '-';
+        const verified = record.verified_by_name ? `<i class="fas fa-check-circle text-success" title="Verified by ${record.verified_by_name}"></i>` : '<i class="fas fa-clock text-warning" title="Pending verification"></i>';
+        
+        row.innerHTML = `
+            <td>${new Date(record.date).toLocaleDateString()}</td>
+            <td>${record.time_in || '-'}</td>
+            <td>${record.time_out || '-'}</td>
+            <td>${record.hours_present || '0.0'}</td>
+            <td><span class="status-badge status-${record.status}">${record.status.replace('_', ' ')}</span></td>
+            <td>${breakTime}</td>
+            <td>${location}</td>
+            <td class="text-center">${verified}</td>
+        `;
+        
+        tbody.appendChild(row);
+    });
+}
+
+function refreshAttendance() {
+    loadTodayStatus();
+    loadAttendanceRecords();
+    showAlert('Attendance data refreshed', 'success');
+}
+
+function initializeFilters() {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    
+    document.getElementById('date-from').value = firstDay.toISOString().split('T')[0];
+    document.getElementById('date-to').value = today.toISOString().split('T')[0];
+}
+
+function resetFilters() {
+    document.getElementById('filter-form').reset();
+    initializeFilters();
+    loadAttendanceRecords();
+}
+
+function exportAttendance() {
+    // Implementation for exporting attendance data
+    showAlert('Export feature coming soon', 'info');
+}
+
+function getCurrentLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            document.getElementById('location-input').value = `Lat: ${lat.toFixed(6)}, Lon: ${lon.toFixed(6)}`;
+        }, function(error) {
+            showAlert('Unable to get location: ' + error.message, 'warning');
+        });
+    } else {
+        showAlert('Geolocation is not supported by this browser', 'warning');
+    }
+}
+
+function setButtonLoading(button, loading) {
+    const spinner = button.querySelector('.loading-spinner');
+    if (loading) {
+        button.disabled = true;
+        spinner.style.display = 'inline-block';
+    } else {
+        button.disabled = false;
+        spinner.style.display = 'none';
+    }
+}
+
+function getCSRFToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+}
+
+function showAlert(message, type = 'info') {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
+    alertDiv.style.zIndex = '9999';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+</script>
 {% endblock %} 

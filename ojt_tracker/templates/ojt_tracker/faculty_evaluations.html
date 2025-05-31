@@ -1,8 +1,112 @@
 {% extends 'ojt_tracker/base.html' %}
+{% load static %}
+
 {% block title %}Faculty - Evaluations{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
-    <h2>Student Evaluations</h2>
-    <!-- Add your faculty evaluations content here -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-clipboard-check me-2"></i>Student Evaluations</h2>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addEvaluationModal">
+                    <i class="fas fa-plus me-2"></i>New Evaluation
+                </button>
+            </div>
+
+            <!-- Evaluations List -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Evaluation Records</h5>
+                </div>
+                <div class="card-body">
+                    {% if evaluations %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Student</th>
+                                        <th>Company</th>
+                                        <th>Evaluation Period</th>
+                                        <th>Overall Score</th>
+                                        <th>Status</th>
+                                        <th>Date Created</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for evaluation in evaluations %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ evaluation.placement.student.user.get_full_name }}</strong><br>
+                                            <small class="text-muted">{{ evaluation.placement.student.student_id }}</small>
+                                        </td>
+                                        <td>{{ evaluation.placement.company.name }}</td>
+                                        <td>
+                                            {{ evaluation.evaluation_period_start|date:"M d" }} - 
+                                            {{ evaluation.evaluation_period_end|date:"M d, Y" }}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-primary">{{ evaluation.overall_score }}/5</span>
+                                        </td>
+                                        <td>
+                                            {% if evaluation.is_final %}
+                                                <span class="badge bg-success">Final</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">Draft</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ evaluation.created_at|date:"M d, Y" }}</td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <button type="button" class="btn btn-sm btn-outline-primary" title="Edit Evaluation" aria-label="Edit Evaluation">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-info" title="View Details" aria-label="View Evaluation Details">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-success" title="Print Evaluation" aria-label="Print Evaluation">
+                                                    <i class="fas fa-print"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-clipboard-check fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No evaluations found. Create your first student evaluation to get started.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Evaluation Modal -->
+<div class="modal fade" id="addEvaluationModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="post">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">Create New Evaluation</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted">Evaluate a student's performance during their OJT placement.</p>
+                    <!-- Form fields would be rendered here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Evaluation</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 {% endblock %} 

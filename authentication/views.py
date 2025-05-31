@@ -13,7 +13,6 @@ from django.contrib.auth.models import User
 from ojt_tracker.models import UserRole
 from django.db import transaction
 import logging
-from django.http import JsonResponse
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -67,11 +66,6 @@ def login_view(request):
     show_register = False
     
     if request.method == 'POST':
-        # Debug CSRF token information
-        logger.info(f"CSRF Token from POST: {request.POST.get('csrfmiddlewaretoken', 'NOT FOUND')}")
-        logger.info(f"CSRF Cookie: {request.COOKIES.get('csrftoken', 'NOT FOUND')}")
-        logger.info(f"Request META CSRF: {request.META.get('CSRF_COOKIE', 'NOT FOUND')}")
-        
         # Check which form was submitted
         if 'login_submit' in request.POST:
             # Handle login
@@ -144,14 +138,3 @@ def logout_view(request):
     logout(request)
     messages.success(request, f'Goodbye {user_name}! You have been successfully logged out.')
     return redirect('authentication:login')
-
-# Add this view for debugging
-@ensure_csrf_cookie
-def csrf_debug(request):
-    """Debug view to check CSRF token"""
-    return JsonResponse({
-        'csrf_token': request.META.get('CSRF_COOKIE'),
-        'method': request.method,
-        'headers': dict(request.headers),
-        'cookies': request.COOKIES,
-    })
